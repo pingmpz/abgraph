@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+{% load static %}
+<!--
+* CoreUI Pro based Bootstrap Admin Template
+* @version v3.2.0
+* @link https://coreui.io/pro/
+* Copyright (c) 2020 creativeLabs Łukasz Holeczek
+* License (https://coreui.io/pro/license)
+-->
+<html lang="en">
+  <head>
+    <base href="./">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="CoreUI - Open Source Bootstrap Admin Template">
+    <meta name="author" content="Łukasz Holeczek">
+    <meta name="keyword" content="Bootstrap,Admin,Template,Open,Source,jQuery,CSS,HTML,RWD,Dashboard">
+    <title>Machine Running Time</title>
+    <!-- Main styles for this application-->
+    <link href="{% static "css/style.css" %}" rel="stylesheet">
+    <link href="{% static "vendors/@coreui/chartjs/css/coreui-chartjs.css" %}" rel="stylesheet">
+  </head>
+  <body class="c-app c-no-layout-transition">
+    <div class="c-wrapper">
+      <div class="c-body">
+        <main class="c-main">
+          <div class="container-fluid">
+            <div class="fade-in">
+              <div class="row">
+                <div class="col-4">
+                  <div class="row">
+                    <!-- Option -->
+                    <div class="col-12">
+                      <div class="card">
+                        <div class="card-header"><strong>Option</strong>
+                          <div class="card-header-actions"></div>
+                        </div>
+                        <div class="card-body">
+                          <div class="form-horizontal">
+                            <div class="form-group row">
+                              <label class="col-md-4 col-form-label">Graph Type</label>
+                              <div class="col-md-8">
+                                <select class="form-control" id="type" name="type">
+                                  <option value="M">Month</option>
+                                  <option value="Y">Year</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="form-group row">
+                              <label class="col-md-4 col-form-label">Year</label>
+                              <div class="col-md-8">
+                                <input class="form-control" type="text" id="year" name="year" placeholder="Example : 2021" maxlength="4" value="2021">
+                              </div>
+                            </div>
+                            <div class="form-group row" id="month_group">
+                              <label class="col-md-4 col-form-label">Month</label>
+                              <div class="col-md-8">
+                                <select class="form-control" id="month" name="month">
+                                  <option value="JAN">January</option>
+                                  <option value="FEB">February</option>
+                                  <option value="MAR">March</option>
+                                  <option value="APR">April</option>
+                                  <option value="MAY">May</option>
+                                  <option value="JUN">June</option>
+                                  <option value="JUL">July</option>
+                                  <option value="AUG">August</option>
+                                  <option value="SEP">September</option>
+                                  <option value="OCT">October</option>
+                                  <option value="NOV">November</option>
+                                  <option value="DEC">December</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Machine -->
+                    <div class="col-12">
+                      <div class="card">
+                        <div class="card-header"><strong>Machine</strong>
+                          <div class="card-header-actions"></div>
+                        </div>
+                        <div class="card-body">
+                          <div class="form-horizontal">
+                            <div class="form-group row">
+                              <label class="col-md-4 col-form-label">Section</label>
+                              <div class="col-md-8">
+                                <select class="form-control" id="section" name="section">
+                                  <option value="All Section" selected>All Section</option>
+                                  <option value="MCA">MCA</option>
+                                  <option value="Section 2">Section 2</option>
+                                  <option value="Section 3">Section 3</option>
+                                  <option value="Section 4">Section 4</option>
+                                  <option value="Section 5">Section 5</option>
+                                </select>
+                                <input class="form-control" type="text" id="section_count" name="section_count" value="5" hidden>
+                              </div>
+                            </div>
+                            <div class="form-group row" id="machine_no_group" hidden>
+                              <label class="col-md-4 col-form-label">Machine No</label>
+                              <div class="col-md-8">
+                                <select class="form-control" id="machine_no" name="machine_no">
+                                  <option value="All Machine" selected>All Machine</option>
+                                  <option value="MCA01">MCA01</option>
+                                  <option value="MCA02">MCA02</option>
+                                  <option value="MCA03">MCA03</option>
+                                  <option value="MCA04">MCA04</option>
+                                  <option value="MCA05">MCA05</option>
+                                </select>
+                                <input class="form-control" type="text" id="machine_count" name="machine_count" value="5" hidden>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Statistic -->
+                    <div class="col-12">
+                      <div class="card">
+                        <div class="card-header"><strong>Statistic</strong>
+                          <div class="card-header-actions"></div>
+                        </div>
+                        <div class="card-body">
+                          <table class="table table-bordered text-center">
+                            <thead class="bg-danger">
+                              <tr>
+                                <th>SHIFT</th>
+                                <th>MIN</th>
+                                <th>MAX</th>
+                                <th>AVERAGE</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <th>DAY</th>
+                                <td id="day_min">0</td>
+                                <td id="day_max">0</td>
+                                <td id="day_avg">0</td>
+                              </tr>
+                              <tr>
+                                <th>NIGHT</th>
+                                <td id="night_min">0</td>
+                                <td id="night_max">0</td>
+                                <td id="night_avg">0</td>
+                              </tr>
+                              <tr>
+                                <th>ALL</th>
+                                <td id="all_min">0</td>
+                                <td id="all_max">0</td>
+                                <td id="all_avg">0</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Machine Running Time -->
+                <div class="col-8">
+                  <div class="card">
+                    <div class="card-header"><strong>Machine Running Time</strong>
+                      <div class="card-header-actions"><small>FETCH DATA AT ― <span id="fetch_time">NONE</span></small></div>
+                    </div>
+                    <div class="card-body">
+                      <div class="c-chart-wrapper">
+                        <canvas id="canvas_1"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <!-- CoreUI and necessary plugins-->
+    <script src="{% static "vendors/@coreui/coreui-pro/js/coreui.bundle.min.js" %}"></script>
+    <!--[if IE]><!-->
+    <script src="{% static "vendors/@coreui/icons/js/svgxuse.min.js" %}"></script>
+    <!--<![endif]-->
+    <script src="{% static "vendors/jquery/js/jquery.min.js" %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script>
+    <!-- <script src="static/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js"></script> -->
+    <script src="{% static "js/charts.js" %}"></script>
+    <!-- <script src="index.js"></script> -->
+    <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function(event) {
+        setTimeout(function() {
+          document.body.classList.remove('c-no-layout-transition')
+        }, 2000);
+      });
+
+      $( document ).ready(function() {
+          var currentdate = new Date();
+          $("#year").val(currentdate.getFullYear());
+          $("#month").val(month_set[currentdate.getMonth()]);
+          set_graph_data();
+      });
+
+      //-- DATA
+      const month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+      const full_month_set = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      var chart_type = 'bar';
+      var title = 'No Machine';
+      var sub_title = 'No Date';
+      var y_title = 'Hour';
+      var x_title = 'Date';
+      var min = 0;
+      var max = 24;
+      var x_count = 30;
+      var labels = [];
+      var data = {};
+      var day_shift = [];
+      var night_shift = [];
+      var footer = (tooltipItems) => {
+          let sum = 0;
+          tooltipItems.forEach(function(tooltipItem) {
+            sum += tooltipItem.parsed.y;
+          });
+          return 'Total : ' + sum;
+      };
+      var config = {
+        type: chart_type,
+        data: data,
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: title
+            },
+            subtitle: {
+                display: true,
+                text: sub_title
+            },
+            tooltip: {
+              callbacks: {
+                footer: footer,
+              }
+            }
+          },
+          responsive: true,
+          scales: {
+            x: {
+              stacked: true,
+              title: {
+                display: true,
+                text: x_title
+              }
+            },
+            y: {
+              stacked: true,
+              min: min,
+              max: max,
+              title: {
+                display: true,
+                text: y_title
+              }
+            }
+          }
+        },
+      };
+
+      var barChart = new Chart(document.getElementById('canvas_1'), config);
+
+      //-- FUNCTION
+      function get_date_count(){
+        var year = $('#year').val();
+        var month = $('#month').val();
+        if(month == "FEB" && (parseInt(year)%4) == 0) return 29;
+        else if(month == "FEB") return 28;
+        else if(month == "JAN" || month == "MAR" || month == "MAY" || month == "JUL" || month == "AUG" || month == "OCT" || month == "DEC") return 31;
+        return 30;
+      }
+
+      function get_date_labels(){
+        var result = [];
+        for(i = 1;i < x_count + 1;i++){
+          result.push(i);
+        }
+        return result;
+      }
+
+      function get_random_data(){
+        var coef = 1; // coefficient
+        var type = $('#type').val();
+        var section = $('#section').val();
+        var section_count = $('#section_count').val();
+        var machine_no = $('#machine_no').val();
+        var machine_count = $('#machine_count').val();
+        if(type == "Y") coef = coef * 30;
+        if(section == "All Section") coef = coef * parseInt(machine_count) * parseInt(section_count);
+        if(section != "All Section" && machine_no == "All Machine") coef = coef * parseInt(machine_count);
+        return Math.floor(Math.random() * 12 * coef);
+      }
+
+      function get_data(){
+        var type = $('#type').val();
+        var year = $('#year').val();
+        var month = $('#month').val();
+        var section = $('#section').val();
+        var section_count = $('#section_count').val();
+        var machine_no = $('#machine_no').val();
+        var machine_count = $('#machine_count').val();
+        //--NEEDWORK -> FETCH REAL DATA
+      }
+
+      function get_data_set(){
+        var result = [];
+        for(i = 1;i < x_count + 1;i++){
+          result.push(get_random_data());
+        }
+        return result;
+      }
+
+      function set_data(){
+        data = {
+          labels: labels,
+          datasets: [
+          {
+            label: 'Day Shift ',
+            backgroundColor: 'rgb(249,213,110)',
+            borderColor: 'rgb(249,213,110)',
+            data: day_shift = get_data_set()
+          },
+          {
+            label: 'Night Shift ',
+            backgroundColor: 'rgb(130,177,254)',
+            borderColor: 'rgb(130,177,254)',
+            data: night_shift = get_data_set()
+          },
+        ]
+        };
+        var currentdate = new Date();
+        var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+        $('#fetch_time').html(datetime);
+      }
+
+      function set_statistic(){
+        $('#day_min').html(Math.min(...day_shift));
+        $('#day_max').html(Math.max(...day_shift));
+        var sum = day_shift.reduce((a, b) => a + b, 0);
+        var avg = (sum / day_shift.length) || 0;
+        $('#day_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
+        $('#night_min').html(Math.min(...night_shift));
+        $('#night_max').html(Math.max(...night_shift));
+        var sum = night_shift.reduce((a, b) => a + b, 0);
+        var avg = (sum / night_shift.length) || 0;
+        $('#night_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
+        var all_shift = [];
+        for(var i = 0;i < day_shift.length;i++){
+          all_shift.push(day_shift[i] + night_shift[i]);
+        }
+        $('#all_min').html(Math.min(...all_shift));
+        $('#all_max').html(Math.max(...all_shift));
+        var sum = all_shift.reduce((a, b) => a + b, 0);
+        var avg = (sum / all_shift.length) || 0;
+        $('#all_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
+      }
+
+      function set_graph_data(){
+        var type = $('#type').val();
+        var year = $('#year').val();
+        var month = $('#month').val();
+        var section = $('#section').val();
+        var section_count = $('#section_count').val();
+        var machine_no = $('#machine_no').val();
+        var machine_count = $('#machine_count').val();
+        if(type == "Y"){
+          sub_title = year;
+          x_count = 12;
+          labels = month_set;
+          if(section == "All Section") max = 744 * parseInt(machine_count) * parseInt(section_count);
+          else if(machine_no == "All Machine") max = 744 * parseInt(machine_count);
+          else max = 744;
+          x_title = 'Month';
+        } else if(type == "M"){
+          sub_title = full_month_set[month_set.indexOf(month)] + " " + year;
+          x_count = get_date_count();
+          labels = get_date_labels();
+          if(section == "All Section") max = 24 * parseInt(machine_count) * parseInt(section_count);
+          else if(machine_no == "All Machine") max = 24 * parseInt(machine_count);
+          else max = 24;
+          x_title = 'Date';
+        }
+        if(section == "All Section") title = "Machine : All Machine From All Section";
+        else if(machine_no == "All Machine") title = "Machine : All Machine From " + section;
+        else title = "Machine : " + machine_no;
+        set_data();
+        set_statistic();
+        barChart.data.labels = labels;
+        barChart.data = data;
+        barChart.options.plugins.subtitle.text = sub_title;
+        barChart.options.plugins.title.text = title;
+        barChart.options.scales.y.max = max;
+        barChart.options.scales.x.title.text = x_title;
+        barChart.update();
+      }
+
+      $('#type').change(function() {
+        toggleMonthGroup();
+        set_graph_data();
+      });
+
+      $('#year').on("keypress keyup keydown",function() {
+        var year = $('#year').val();
+        if(year.length == 4){
+          set_graph_data();
+          $('#year').removeClass("is-invalid");
+          $('#year').addClass("is-valid");
+        } else {
+          $('#year').removeClass("is-valid");
+          $('#year').addClass("is-invalid");
+        }
+      });
+
+      $('#month').change(function() {
+        set_graph_data();
+      });
+
+      $('#section').change(function() {
+        toggleMachineNoGroup();
+        //--NEEDWORK -> CHANGE MACHINE NO SELECTION && MACHINE COUNT
+        set_graph_data();
+      });
+
+      $('#machine_no').change(function() {
+        set_graph_data();
+      });
+
+      function toggleMonthGroup(){
+        var type = $('#type').val();
+        if(type == "M") {
+          $('#month_group').prop('hidden', false);
+        } else {
+          $('#month_group').prop('hidden', true);
+        }
+      }
+
+      function toggleMachineNoGroup(){
+        var section = $('#section').val();
+        if(section != "All Section") {
+          $('#machine_no_group').prop('hidden', false);
+          $('#machine_no').val('All Machine');
+        } else {
+          $('#machine_no_group').prop('hidden', true);
+        }
+      }
+
+      $("#year").on("keypress keyup blur",function (event) {
+          $(this).val($(this).val().replace(/[^\d].+/, ""));
+           if ((event.which < 48 || event.which > 57)) {
+               event.preventDefault();
+           }
+       });
+    </script>
+  </body>
+</html>
