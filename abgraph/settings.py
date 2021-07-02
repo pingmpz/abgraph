@@ -76,28 +76,12 @@ WSGI_APPLICATION = 'abgraph.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         # 'ENGINE': 'sql_server.pyodbc', #mssql
-#         'ENGINE': 'mssql',
-#         'NAME' : 'CCS_Production',
-#         'HOST' : 'SVSP-SQL', #129.1.100.150\SVSP-SQL\14.0.2037.2
-#         'PORT' : '',
-#         # 'USER' : 'CCSGROUPS\sqladmin',
-#         # 'PASSWORD' : "$ql@2019",
-#         'DRIVER': 'SQL Server Native Client 11.0',
-#         # ODBC Driver 17 for SQL Server
-#         # SQL Server Native Client 11.0
-#     }
-# }
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
