@@ -100,7 +100,7 @@
                               <label class="col-md-4 col-form-label">Machine No</label>
                               <div class="col-md-8">
                                 <select class="form-control" id="machine_no" name="machine_no">
-                                  <option value="All Machine" selected>All Machine</option>
+                                  <option value="All Machine" selected>All Machine ({{machine_list|length}})</option>
                                   {% for machine in machine_list %}
                                   <option value="{{ machine.MachineNumber }}">{{ machine.MachineNumber }} | {{ machine.MachineName }}</option>
                                   {% endfor %}
@@ -427,7 +427,7 @@
           console.log(machine_list);
           $('#machine_no').empty();
           var opt = document.createElement('option');
-          opt.appendChild(document.createTextNode("All Machine"));
+          opt.appendChild(document.createTextNode("All Machine (" + machine_list.length + ")"));
           opt.value = "All Machine";
           machine_no.appendChild(opt);
           for(var i = 0;i < machine_list.length;i++){
