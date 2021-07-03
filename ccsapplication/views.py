@@ -18,6 +18,7 @@ def index(request):
     cursor = get_connection().cursor()
     UpdateWorkCenterGroup().start()
     UpdateMachine().start()
+    UpdateTransaction().start()
     workcentergroup_list = WorkCenterGroup.objects.all()
     machine_list = Machine.objects.all()
     context = {
@@ -96,6 +97,9 @@ class UpdateWorkCenterGroup(threading.Thread):
             if isExist == False:
                 wcg_new = WorkCenterGroup(name=wcg.WorkCenterGroup)
                 wcg_new.save()
+        print("------------------------------------------")
+        print("--- UPDATE WORK CENTER GROUP COMPLETED ---")
+        print("------------------------------------------")
 
 class UpdateMachine(threading.Thread):
     def __init__(self):
@@ -113,6 +117,9 @@ class UpdateMachine(threading.Thread):
                     wcg = WorkCenterGroup.objects.get(name=mc[2])
                     mc_new = Machine(no=mc[0],name=mc[1],wcg=wcg)
                     mc_new.save()
+        print("--------------------------------")
+        print("--- UPDATE MACHINE COMPLETED ---")
+        print("--------------------------------")
 
 class UpdateTransaction(threading.Thread):
     def __init__(self):
@@ -123,3 +130,14 @@ class UpdateTransaction(threading.Thread):
         queryStr = "SELECT MachineOperatorID, MachineOperatorStart, MachineOperatorStop, MachineOperatorTime FROM L_ProductionOrderRoutingMachineOperator WHERE OperateBy = 'Machine' AND MachineOperatorTime <> 0"
         cursor.execute(queryStr)
         transaction_list = cursor.fetchall()
+        for tran in transaction_list:
+            isMachineExist = Machine.objects.filter(no=tran[0]).exists()
+            if isMachineExist == True:
+                mc = Machine.objects.get(no=tran[0])
+                isTranExist = Transaction.objects.filter(mc=mc,start_datetime=tran[1],stop_datetime=tran[2],operate_time=tran[3]).exists()
+                if isTranExist == False:
+                    tran_new = Transaction(mc=mc,start_datetime=tran[1],stop_datetime=tran[2],operate_time=tran[3])
+                    tran_new.save()
+        print("------------------------------------")
+        print("--- UPDATE TRANSACTION COMPLETED ---")
+        print("------------------------------------")
