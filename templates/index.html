@@ -87,13 +87,13 @@
                             <div class="form-group row">
                               <label class="col-md-4 col-form-label">Work Center Group</label>
                               <div class="col-md-8">
-                                <select class="form-control" id="work_center_group" name="work_center_group">
+                                <select class="form-control" id="work_center_group_id" name="work_center_group_id">
                                   <option value="All Work Center Group" selected>All Work Center Group</option>
                                   {% for workcentergroup in workcentergroup_list %}
-                                  <option value="{{ workcentergroup.WorkCenterGroup }}">{{ workcentergroup.WorkCenterGroup }}</option>
+                                  <option value="{{ workcentergroup.id }}">{{ workcentergroup.name }}</option>
                                   {% endfor %}
                                 </select>
-                                <input class="form-control" type="text" id="work_center_group_count" name="work_center_group_count" value="{{workcentergroup_list|length}}" hidden>
+                                <input class="form-control" type="text" id="work_center_group_id_count" name="work_center_group_id_count" value="{{workcentergroup_list|length}}" hidden>
                               </div>
                             </div>
                             <div class="form-group row" id="machine_no_group" hidden>
@@ -102,11 +102,16 @@
                                 <select class="form-control" id="machine_no" name="machine_no">
                                   <option value="All Machine" selected>All Machine ({{machine_list|length}})</option>
                                   {% for machine in machine_list %}
-                                  <option value="{{ machine.MachineNumber }}">{{ machine.MachineNumber }} | {{ machine.MachineName }}</option>
+                                  <option value="{{ machine.no }}">{{ machine.no }} | {{ machine.name }}</option>
                                   {% endfor %}
                                 </select>
                                 <input class="form-control" type="text" id="machine_count" name="machine_count" value="{{machine_list|length}}" hidden>
                               </div>
+                            </div>
+                            <div class="form-group row">
+                              <label class="col-md-12">
+                                <!-- <button type="button" class="btn btn-primary" onclick="set_graph_data()">Execute</button> -->
+                              </label>
                             </div>
                           </div>
                         </div>
@@ -182,6 +187,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script>
     <!-- <script src="static/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js"></script> -->
     <script src="{% static "js/charts.js" %}"></script>
+    <script src="{% static "js/loading-buttons.js" %}"></script>
     <!-- <script src="index.js"></script> -->
     <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -284,8 +290,8 @@
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
-        var work_center_group = $('#work_center_group').val();
-        var work_center_group_count = $('#work_center_group_count').val();
+        var work_center_group_id = $('#work_center_group_id').val();
+        var work_center_group_id_count = $('#work_center_group_id_count').val();
         var machine_no = $('#machine_no').val();
         var machine_count = $('#machine_count').val();
         $.ajax({
@@ -296,8 +302,8 @@
             'type': type,
             'year': year,
             'month': month,
-            'work_center_group': work_center_group,
-            'work_center_group_count': work_center_group_count,
+            'work_center_group_id': work_center_group_id,
+            'work_center_group_id_count': work_center_group_id_count,
             'machine_no': machine_no,
             'machine_count': machine_count,
           },
@@ -351,15 +357,15 @@
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
-        var work_center_group = $('#work_center_group').val();
-        var work_center_group_count = $('#work_center_group_count').val();
+        var work_center_group_id = $('#work_center_group_id').val();
+        var work_center_group_id_count = $('#work_center_group_id_count').val();
         var machine_no = $('#machine_no').val();
         var machine_count = $('#machine_count').val();
         if(type == "Y"){
           sub_title = year;
           x_count = 12;
           labels = month_set;
-          if(work_center_group == "All Work Center Group") max = 744 * parseInt(machine_count) * parseInt(work_center_group_count);
+          if(work_center_group_id == "All Work Center Group") max = 744 * parseInt(machine_count) * parseInt(work_center_group_id_count);
           else if(machine_no == "All Machine") max = 744 * parseInt(machine_count);
           else max = 744;
           x_title = 'Month';
@@ -367,13 +373,13 @@
           sub_title = full_month_set[month_set.indexOf(month)] + " " + year;
           x_count = get_date_count();
           labels = get_date_labels();
-          if(work_center_group == "All Work Center Group") max = 24 * parseInt(machine_count) * parseInt(work_center_group_count);
+          if(work_center_group_id == "All Work Center Group") max = 24 * parseInt(machine_count) * parseInt(work_center_group_id_count);
           else if(machine_no == "All Machine") max = 24 * parseInt(machine_count);
           else max = 24;
           x_title = 'Date';
         }
-        if(work_center_group == "All Work Center Group") title = "Machine : All Machine From All Work Center Group";
-        else if(machine_no == "All Machine") title = "Machine : All Machine From " + work_center_group;
+        if(work_center_group_id == "All Work Center Group") title = "Machine : All Machine From All Work Center Group";
+        else if(machine_no == "All Machine") title = "Machine : All Machine From " + work_center_group_id;
         else title = "Machine : " + machine_no;
         set_data();
       }
@@ -421,10 +427,9 @@
         set_graph_data();
       });
 
-      $('#work_center_group').change(function() {
+      $('#work_center_group_id').change(function() {
         toggleMachineNoGroup();
         set_machine_list(function(machine_list){
-          console.log(machine_list);
           $('#machine_no').empty();
           var opt = document.createElement('option');
           opt.appendChild(document.createTextNode("All Machine (" + machine_list.length + ")"));
@@ -441,6 +446,20 @@
         });
       });
 
+      function set_machine_list(callback){
+        var work_center_group_id = $('#work_center_group_id').val();
+        $.ajax({
+          url: '/get_machine_list/',
+          data: {
+            'work_center_group_id' : work_center_group_id,
+          },
+          dataType: 'json',
+          success: function (data) {
+            callback(data.machine_list);
+          }
+        });
+      }
+
       $('#machine_no').change(function() {
         set_graph_data();
       });
@@ -455,28 +474,15 @@
       }
 
       function toggleMachineNoGroup(){
-        var work_center_group = $('#work_center_group').val();
-        if(work_center_group != "All Work Center Group") {
+        var work_center_group_id = $('#work_center_group_id').val();
+        if(work_center_group_id != "All Work Center Group") {
           $('#machine_no_group').prop('hidden', false);
-          $('#machine_no').val('All Machine');
         } else {
           $('#machine_no_group').prop('hidden', true);
         }
+        $('#machine_no').val('All Machine');
       }
 
-      function set_machine_list(callback){
-        var work_center_group = $('#work_center_group').val();
-        $.ajax({
-          url: '/get_machine_list/',
-          data: {
-            'work_center_group' : work_center_group,
-          },
-          dataType: 'json',
-          success: function (data) {
-            callback(data.machine_list);
-          }
-        });
-      }
 
       $("#year").on("keypress keyup blur",function (event) {
           $(this).val($(this).val().replace(/[^\d].+/, ""));
