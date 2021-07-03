@@ -1,11 +1,12 @@
 from django.shortcuts import render
 import pyodbc
-from .models import WorkCenterGroup, Machine, Transaction, Record
+from .models import WorkCenterGroup, Machine, Transaction
 from django.http import JsonResponse
 import math
 import random
 import json
 import threading
+from datetime import datetime
 
 def get_connection():
     conn = pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;')
@@ -18,7 +19,7 @@ def index(request):
     cursor = get_connection().cursor()
     UpdateWorkCenterGroup().start()
     UpdateMachine().start()
-    UpdateTransaction().start()
+    # UpdateTransaction().start()
     workcentergroup_list = WorkCenterGroup.objects.all()
     machine_list = Machine.objects.all()
     context = {
@@ -42,7 +43,26 @@ def get_data(request):
     #-- FETCH DATA FROM DATABASE
     cursor = get_connection().cursor()
     result = []
-    result = get_random_data(x_count, type, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
+    for i in range(x_count):
+        if type == 'M':
+            if work_center_group_id == "All Work Center Group":
+                temp = 1
+            elif machine_no == 'All Machine':
+                temp = 1
+            else:
+                mc = Machine.objects.get(no=machine_no)
+                trans = Transaction.objects.filter(mc=mc,start_datetime__year=year)
+                trans = trans.filter(start_datetime__month=get_month_no(month))
+                trans = trans.filter(start_datetime__day=(i+1))
+                if shift == 'DAY':
+                    trans = trans.filter(start_datetime__hour__gt=8)
+                    trans = trans.filter(start_datetime__hour__lt=19)
+                temp_time = 0
+                for t in trans:
+                    temp_time += round(float(t.operate_time) / 60)
+                result.append(temp_time)
+    print(result)
+    # result = get_random_data(x_count, type, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
     data = {
         'result' : result,
     }
@@ -89,16 +109,22 @@ class UpdateWorkCenterGroup(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        all_item = 0
+        new_item = 0
         cursor = get_connection().cursor()
         cursor.execute("SELECT REPLACE(WorkCenterGroup, ' Machine', '') as WorkCenterGroup FROM M_Machine WHERE WorkCenterGroup NOT LIKE '%Man%' GROUP BY WorkCenterGroup")
         workcentergroup_list = cursor.fetchall()
         for wcg in workcentergroup_list:
+            all_item += 1
             isExist = WorkCenterGroup.objects.filter(name=wcg[0]).exists()
             if isExist == False:
                 wcg_new = WorkCenterGroup(name=wcg.WorkCenterGroup)
                 wcg_new.save()
+                new_item += 1
         print("------------------------------------------")
-        print("--- UPDATE WORK CENTER GROUP COMPLETED ---")
+        print("--- UPDATE WORK CENTER GROUP COMPLETED")
+        print("--- ALL ITEM : " + str(all_item))
+        print("--- NEW ITEM : " + str(new_item))
         print("------------------------------------------")
 
 class UpdateMachine(threading.Thread):
@@ -106,10 +132,13 @@ class UpdateMachine(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        all_item = 0
+        new_item = 0
         cursor = get_connection().cursor()
         cursor.execute("SELECT MachineNumber, MachineName, REPLACE(WorkCenterGroup, ' Machine', '') as WorkCenterGroup FROM M_Machine")
         machine_list = cursor.fetchall()
         for mc in machine_list:
+            all_item += 1
             isMachineExist = Machine.objects.filter(no=mc[0]).exists()
             if isMachineExist == False:
                 isWCGExist = WorkCenterGroup.objects.filter(name=mc[2]).exists()
@@ -117,8 +146,11 @@ class UpdateMachine(threading.Thread):
                     wcg = WorkCenterGroup.objects.get(name=mc[2])
                     mc_new = Machine(no=mc[0],name=mc[1],wcg=wcg)
                     mc_new.save()
+                    new_item += 1
         print("--------------------------------")
-        print("--- UPDATE MACHINE COMPLETED ---")
+        print("--- UPDATE MACHINE COMPLETED")
+        print("--- ALL ITEM : " + str(all_item))
+        print("--- NEW ITEM : " + str(new_item))
         print("--------------------------------")
 
 class UpdateTransaction(threading.Thread):
@@ -126,11 +158,14 @@ class UpdateTransaction(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        all_item = 0
+        new_item = 0
         cursor = get_connection().cursor()
         queryStr = "SELECT MachineOperatorID, MachineOperatorStart, MachineOperatorStop, MachineOperatorTime FROM L_ProductionOrderRoutingMachineOperator WHERE OperateBy = 'Machine' AND MachineOperatorTime <> 0"
         cursor.execute(queryStr)
         transaction_list = cursor.fetchall()
         for tran in transaction_list:
+            all_item += 1
             isMachineExist = Machine.objects.filter(no=tran[0]).exists()
             if isMachineExist == True:
                 mc = Machine.objects.get(no=tran[0])
@@ -138,6 +173,9 @@ class UpdateTransaction(threading.Thread):
                 if isTranExist == False:
                     tran_new = Transaction(mc=mc,start_datetime=tran[1],stop_datetime=tran[2],operate_time=tran[3])
                     tran_new.save()
+                    new_item += 1
         print("------------------------------------")
-        print("--- UPDATE TRANSACTION COMPLETED ---")
+        print("--- UPDATE TRANSACTION COMPLETED")
+        print("--- ALL ITEM : " + str(all_item))
+        print("--- NEW ITEM : " + str(new_item))
         print("------------------------------------")
