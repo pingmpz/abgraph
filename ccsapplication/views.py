@@ -6,7 +6,7 @@ import random
 import json
 
 def get_connection():
-    conn=pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;')
+    conn = pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;')
                         # 'UID=CCSGROUPS\sqladmin;'
                         # 'PWD=$ql@2019;'
                         # 'Trusted_Connection=yes;'
