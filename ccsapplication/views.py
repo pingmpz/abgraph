@@ -7,6 +7,7 @@ import random
 import json
 import threading
 from datetime import datetime
+import time
 
 def get_connection():
     conn = pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;')
@@ -38,30 +39,50 @@ def get_data(request):
     work_center_group_id_count = request.GET.get('work_center_group_id_count')
     machine_no = request.GET.get('machine_no')
     machine_count = request.GET.get('machine_count')
-    # print(shift, x_count, type, year, month, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
+    print("------------------------------------------")
+    print("SHIFT : ", shift)
+    print("TYPE : ", type)
+    print("YEAR : ", year)
+    if type == 'M':
+        print("MONTH : ", month, "(" + get_month_no(month) + ")")
+    print("WCG ID : ", work_center_group_id)
+    if work_center_group_id != "All Work Center Group":
+        print("MACHINE NO : ", machine_no)
+    print("------------------------------------------")
     #-- FETCH DATA FROM DATABASE
     result = []
+    t0 = time.time()
     for i in range(x_count):
-        if type == 'M':
-            trans = Transaction.objects.all()
-            trans = trans.filter(start_datetime__year=year) #CHECK YEAR
+        trans = Transaction.objects.filter(start_datetime__year=year) #CHECK YEAR
+        if type == 'Y':
+            trans = trans.filter(start_datetime__month=(i+1)) #CHECK MONTH
+        elif type == 'M':
             trans = trans.filter(start_datetime__month=get_month_no(month)) #CHECK MONTH
             trans = trans.filter(start_datetime__day=(i+1)) #CHECK DATE
-            if machine_no != 'All Machine':
-                mc = Machine.objects.get(no=machine_no)
-                trans = trans.filter(mc=mc)
-            elif work_center_group_id != "All Work Center Group":
-                wcg = WorkCenterGroup.objects.get(id=work_center_group_id)
-                mcs = Machine.objects.filter(wcg=wcg)
-                trans = trans.filter(mc__in=mcs)
-            if shift == 'DAY':
-                trans = trans.filter(start_datetime__hour__gt=8)
-                trans = trans.filter(start_datetime__hour__lt=19)
-            temp_time = 0
-            for t in trans:
-                temp_time += round(float(t.operate_time) / 60)
-                result.append(temp_time)
+        if shift == 'DAY':
+            trans = trans.filter(start_datetime__hour__gte=7)
+            trans = trans.filter(start_datetime__hour__lt=19)
+        elif shift == 'NIGHT':
+            trans = trans.filter(start_datetime__hour__gte=19) | trans.filter(start_datetime__hour__lt=7)
+        if machine_no != 'All Machine':
+            mc = Machine.objects.get(no=machine_no)
+            trans = trans.filter(mc=mc)
+        elif work_center_group_id != "All Work Center Group":
+            wcg = WorkCenterGroup.objects.get(id=work_center_group_id)
+            mcs = Machine.objects.filter(wcg=wcg)
+            trans = trans.filter(mc__in=mcs)
+        temp_time = 0
+        temp_machine_no = "-1"
+        for t in trans:
+            # print(t.mc.no, t.start_datetime, t.stop_datetime, t.operate_time)
+            temp_time += round(float(t.operate_time) / 60)
+        result.append(temp_time)
+    t1 = time.time()
+    print("EXCUTE COMPLETED !")
+    print("EXCUTE TIME : ", (t1 - t0))
+    print("------------------------------------------")
     # result = get_random_data(x_count, type, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
+    # print(result)
     data = {
         'result' : result,
     }

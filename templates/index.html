@@ -30,10 +30,9 @@
               <div class="row">
                 <div class="col-4">
                   <div class="row">
-                    <!-- Option -->
                     <div class="col-12">
                       <div class="card">
-                        <div class="card-header"><strong>Option</strong>
+                        <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions"></div>
                         </div>
                         <div class="card-body">
@@ -72,18 +71,6 @@
                                 </select>
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Machine -->
-                    <div class="col-12">
-                      <div class="card">
-                        <div class="card-header"><strong>Machine</strong>
-                          <div class="card-header-actions"></div>
-                        </div>
-                        <div class="card-body">
-                          <div class="form-horizontal">
                             <div class="form-group row">
                               <label class="col-md-4 col-form-label">Work Center Group</label>
                               <div class="col-md-8">
@@ -109,8 +96,11 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-12">
-                                <!-- <button type="button" class="btn btn-primary" onclick="set_graph_data()">Execute</button> -->
+                              <label class="col-md-6 col-form-label">
+                                <input type="checkbox" id="auto_execute" name="auto_execute" checked> Auto Execute
+                              </label>
+                              <label class="col-md-6 text-right">
+                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph_data()" disabled>Execute</button>
                               </label>
                             </div>
                           </div>
@@ -168,6 +158,21 @@
                     <div class="card-body">
                       <div class="c-chart-wrapper">
                         <canvas id="canvas_1"></canvas>
+                        <div class="sk-fading-circle" id="loading_spinner" hidden>
+                          <div class="sk-circle1 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle2 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle3 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle4 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle5 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle6 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle7 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle8 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle9 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle10 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle11 sk-circle" style="height: 400%; width: 400%"></div>
+                          <div class="sk-circle12 sk-circle" style="height: 400%; width: 400%"></div>
+                        </div>
+                        <div id="loading_space"><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></div>
                       </div>
                     </div>
                   </div>
@@ -255,8 +260,8 @@
             },
             y: {
               stacked: true,
-              min: min,
-              max: max,
+              // min: min,
+              // max: max,
               title: {
                 display: true,
                 text: y_title
@@ -341,12 +346,15 @@
             var currentdate = new Date();
             var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
             $('#fetch_time').html("FETCH DATA AT ― " + datetime);
+            $('#loading_spinner').prop("hidden", true)
+            $('#loading_space').prop("hidden", true)
+            $('#canvas_1').prop("hidden", false)
             set_statistic();
             barChart.data.labels = labels;
             barChart.data = data;
             barChart.options.plugins.subtitle.text = sub_title;
             barChart.options.plugins.title.text = title;
-            barChart.options.scales.y.max = max;
+            // barChart.options.scales.y.max = max;
             barChart.options.scales.x.title.text = x_title;
             barChart.update();
           });
@@ -355,6 +363,9 @@
 
       function set_graph_data(){
         $('#fetch_time').html("FETCHING DATA ...");
+        $('#loading_spinner').prop("hidden", false)
+        $('#loading_space').prop("hidden", false)
+        $('#canvas_1').prop("hidden", true)
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
@@ -409,13 +420,17 @@
 
       $('#type').change(function() {
         toggleMonthGroup();
-        set_graph_data();
+        if($('#auto_execute').is(":checked")){
+          set_graph_data();
+        }
       });
 
       $('#year').on("keypress keyup keydown",function() {
         var year = $('#year').val();
         if(year.length == 4){
-          set_graph_data();
+          if($('#auto_execute').is(":checked")){
+            set_graph_data();
+          }
           $('#year').removeClass("is-invalid");
           $('#year').addClass("is-valid");
         } else {
@@ -425,7 +440,9 @@
       });
 
       $('#month').change(function() {
-        set_graph_data();
+        if($('#auto_execute').is(":checked")){
+          set_graph_data();
+        }
       });
 
       $('#work_center_group_id').change(function() {
@@ -443,7 +460,9 @@
             machine_no.appendChild(opt);
           }
           $('#machine_count').val(machine_list.length);
-          set_graph_data();
+          if($('#auto_execute').is(":checked")){
+            set_graph_data();
+          }
         });
       });
 
@@ -462,7 +481,9 @@
       }
 
       $('#machine_no').change(function() {
-        set_graph_data();
+        if($('#auto_execute').is(":checked")){
+          set_graph_data();
+        }
       });
 
       function toggleMonthGroup(){
@@ -483,6 +504,11 @@
         }
         $('#machine_no').val('All Machine');
       }
+
+      $('#auto_execute').change(function() {
+        if(this.checked) $('#execute').prop("disabled", true);
+        else $('#execute').prop("disabled", false);
+      });
 
 
       $("#year").on("keypress keyup blur",function (event) {
