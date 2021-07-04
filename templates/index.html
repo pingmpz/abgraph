@@ -163,7 +163,7 @@
                 <div class="col-8">
                   <div class="card">
                     <div class="card-header"><strong>Machine Running Time</strong>
-                      <div class="card-header-actions"><small>FETCH DATA AT ― <span id="fetch_time">NONE</span></small></div>
+                      <div class="card-header-actions"><small id="fetch_time">FETCH DATA AT ― NONE</small></div>
                     </div>
                     <div class="card-body">
                       <div class="c-chart-wrapper">
@@ -340,7 +340,7 @@
             };
             var currentdate = new Date();
             var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-            $('#fetch_time').html(datetime);
+            $('#fetch_time').html("FETCH DATA AT ― " + datetime);
             set_statistic();
             barChart.data.labels = labels;
             barChart.data = data;
@@ -354,6 +354,7 @@
       }
 
       function set_graph_data(){
+        $('#fetch_time').html("FETCHING DATA ...");
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();

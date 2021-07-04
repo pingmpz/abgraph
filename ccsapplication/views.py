@@ -16,9 +16,8 @@ def get_connection():
     return conn
 
 def index(request):
-    cursor = get_connection().cursor()
-    UpdateWorkCenterGroup().start()
-    UpdateMachine().start()
+    # UpdateWorkCenterGroup().start()
+    # UpdateMachine().start()
     # UpdateTransaction().start()
     workcentergroup_list = WorkCenterGroup.objects.all()
     machine_list = Machine.objects.all()
@@ -41,27 +40,27 @@ def get_data(request):
     machine_count = request.GET.get('machine_count')
     # print(shift, x_count, type, year, month, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
     #-- FETCH DATA FROM DATABASE
-    cursor = get_connection().cursor()
     result = []
     for i in range(x_count):
         if type == 'M':
-            if work_center_group_id == "All Work Center Group":
-                temp = 1
-            elif machine_no == 'All Machine':
-                temp = 1
-            else:
+            trans = Transaction.objects.all()
+            trans = trans.filter(start_datetime__year=year) #CHECK YEAR
+            trans = trans.filter(start_datetime__month=get_month_no(month)) #CHECK MONTH
+            trans = trans.filter(start_datetime__day=(i+1)) #CHECK DATE
+            if machine_no != 'All Machine':
                 mc = Machine.objects.get(no=machine_no)
-                trans = Transaction.objects.filter(mc=mc,start_datetime__year=year)
-                trans = trans.filter(start_datetime__month=get_month_no(month))
-                trans = trans.filter(start_datetime__day=(i+1))
-                if shift == 'DAY':
-                    trans = trans.filter(start_datetime__hour__gt=8)
-                    trans = trans.filter(start_datetime__hour__lt=19)
-                temp_time = 0
-                for t in trans:
-                    temp_time += round(float(t.operate_time) / 60)
+                trans = trans.filter(mc=mc)
+            elif work_center_group_id != "All Work Center Group":
+                wcg = WorkCenterGroup.objects.get(id=work_center_group_id)
+                mcs = Machine.objects.filter(wcg=wcg)
+                trans = trans.filter(mc__in=mcs)
+            if shift == 'DAY':
+                trans = trans.filter(start_datetime__hour__gt=8)
+                trans = trans.filter(start_datetime__hour__lt=19)
+            temp_time = 0
+            for t in trans:
+                temp_time += round(float(t.operate_time) / 60)
                 result.append(temp_time)
-    print(result)
     # result = get_random_data(x_count, type, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
     data = {
         'result' : result,
