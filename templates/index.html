@@ -31,9 +31,11 @@
                 <div class="col-4">
                   <div class="row">
                     <div class="col-12">
-                      <div class="card">
+                      <div class="card" id="card_filter">
                         <div class="card-header"><strong>Filter</strong>
-                          <div class="card-header-actions"></div>
+                          <div class="card-header-actions">
+                            <button type="button" class="btn btn-link" id="update_data" name="update_data" onclick="update_data()">Update Data</button>
+                          </div>
                         </div>
                         <div class="card-body">
                           <div class="form-horizontal">
@@ -96,8 +98,15 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-6 col-form-label">
-                                <input type="checkbox" id="auto_execute" name="auto_execute" checked> Auto Execute
+                              <label class="col-md-6">
+                                <div class="form-check checkbox">
+                                  <input class="form-check-input" type="checkbox" id="data_error" name="data_error">
+                                  <label class="form-check-label" for="data_error">Include Error Data</label>
+                                </div>
+                                <div class="form-check checkbox">
+                                  <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
+                                  <label class="form-check-label" for="auto_execute">Auto Execute</label>
+                                </div>
                               </label>
                               <label class="col-md-6 text-right">
                                 <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph_data()" disabled>Execute</button>
@@ -214,21 +223,29 @@
       var chart_type = 'bar';
       var title = 'No Machine';
       var sub_title = 'No Date';
-      var y_title = 'Hour';
+      var y_title = 'Minutes';
       var x_title = 'Date';
-      var min = 0;
-      var max = 24;
       var x_count = 30;
       var labels = [];
       var data = {};
       var day_shift = [];
       var night_shift = [];
+      var day_bar_color = [];
+      var day_bar_border_color = [];
+      var night_bar_color = [];
+      var night_bar_border_color = [];
       var footer = (tooltipItems) => {
-          let sum = 0;
+          let sum = i = 0;
+          let data = [0, 0];
           tooltipItems.forEach(function(tooltipItem) {
+            data[i] = tooltipItem.parsed.y;
             sum += tooltipItem.parsed.y;
+            i++;
           });
-          return 'Total : ' + sum;
+          return 'Day Shift (Hours) ― ' + Math.floor(data[0]/60) + ":" + addZero(data[0]%60)
+          + '\nNight Shift (Hours) ― ' + Math.floor(data[1]/60) + ":" + addZero(data[1]%60)
+          + '\nTotal Minutes ― ' + numberWithCommas(sum)
+          + '\nTotal Hours ― ' + Math.floor(sum/60) + ":" + addZero(sum%60);
       };
       var config = {
         type: chart_type,
@@ -247,7 +264,7 @@
               callbacks: {
                 footer: footer,
               }
-            }
+            },
           },
           responsive: true,
           scales: {
@@ -260,8 +277,6 @@
             },
             y: {
               stacked: true,
-              // min: min,
-              // max: max,
               title: {
                 display: true,
                 text: y_title
@@ -269,103 +284,30 @@
             }
           }
         },
+          draw: function () {
+          Chart.types.Line.prototype.draw.apply(this, arguments);
+
+          var point = this.datasets[0].points[this.options.lineAtIndex]
+          var scale = this.scale
+
+          // draw line
+          this.chart.ctx.beginPath();
+          this.chart.ctx.moveTo(point.x, scale.startPoint + 24);
+          this.chart.ctx.strokeStyle = '#ff0000';
+          this.chart.ctx.lineTo(point.x, scale.endPoint);
+          this.chart.ctx.stroke();
+
+          // write TODAY
+          this.chart.ctx.textAlign = 'center';
+          this.chart.ctx.fillText("TODAY", point.x, scale.startPoint + 12);
+        }
       };
 
       var barChart = new Chart(document.getElementById('canvas_1'), config);
 
-      //-- FUNCTION
-      function get_date_count(){
-        var year = $('#year').val();
-        var month = $('#month').val();
-        if(month == "FEB" && (parseInt(year)%4) == 0) return 29;
-        else if(month == "FEB") return 28;
-        else if(month == "JAN" || month == "MAR" || month == "MAY" || month == "JUL" || month == "AUG" || month == "OCT" || month == "DEC") return 31;
-        return 30;
-      }
-
-      function get_date_labels(){
-        var result = [];
-        for(i = 1;i < x_count + 1;i++){
-          result.push(i);
-        }
-        return result;
-      }
-
-      function get_data(shift, callback){
-        var type = $('#type').val();
-        var year = $('#year').val();
-        var month = $('#month').val();
-        var work_center_group_id = $('#work_center_group_id').val();
-        var work_center_group_id_count = $('#work_center_group_id_count').val();
-        var machine_no = $('#machine_no').val();
-        var machine_count = $('#machine_count').val();
-        $.ajax({
-          url: '/get_data/',
-          data: {
-            'shift' : shift,
-            'x_count' : x_count,
-            'type': type,
-            'year': year,
-            'month': month,
-            'work_center_group_id': work_center_group_id,
-            'work_center_group_id_count': work_center_group_id_count,
-            'machine_no': machine_no,
-            'machine_count': machine_count,
-          },
-          dataType: 'json',
-          success: function (data) {
-            var result = [];
-            result = data.result;
-            callback(result);
-          }
-        });
-      }
-
-      function set_data(){
-        get_data('DAY', function(result) {
-          day_shift = result;
-          get_data('NIGHT', function(result) {
-            night_shift = result;
-            data = {
-              labels: labels,
-              datasets: [
-              {
-                label: 'Day Shift ',
-                backgroundColor: 'rgb(249,213,110)',
-                borderColor: 'rgb(249,213,110)',
-                data: day_shift
-              },
-              {
-                label: 'Night Shift ',
-                backgroundColor: 'rgb(130,177,254)',
-                borderColor: 'rgb(130,177,254)',
-                data: night_shift
-              },
-            ]
-            };
-            var currentdate = new Date();
-            var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-            $('#fetch_time').html("FETCH DATA AT ― " + datetime);
-            $('#loading_spinner').prop("hidden", true)
-            $('#loading_space').prop("hidden", true)
-            $('#canvas_1').prop("hidden", false)
-            set_statistic();
-            barChart.data.labels = labels;
-            barChart.data = data;
-            barChart.options.plugins.subtitle.text = sub_title;
-            barChart.options.plugins.title.text = title;
-            // barChart.options.scales.y.max = max;
-            barChart.options.scales.x.title.text = x_title;
-            barChart.update();
-          });
-        });
-      }
-
+      //-- MAIN FUNCTION
       function set_graph_data(){
-        $('#fetch_time').html("FETCHING DATA ...");
-        $('#loading_spinner').prop("hidden", false)
-        $('#loading_space').prop("hidden", false)
-        $('#canvas_1').prop("hidden", true)
+        preload();
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
@@ -377,23 +319,140 @@
           sub_title = year;
           x_count = 12;
           labels = month_set;
-          if(work_center_group_id == "All Work Center Group") max = 744 * parseInt(machine_count) * parseInt(work_center_group_id_count);
-          else if(machine_no == "All Machine") max = 744 * parseInt(machine_count);
-          else max = 744;
           x_title = 'Month';
         } else if(type == "M"){
           sub_title = full_month_set[month_set.indexOf(month)] + " " + year;
           x_count = get_date_count();
           labels = get_date_labels();
-          if(work_center_group_id == "All Work Center Group") max = 24 * parseInt(machine_count) * parseInt(work_center_group_id_count);
-          else if(machine_no == "All Machine") max = 24 * parseInt(machine_count);
-          else max = 24;
           x_title = 'Date';
         }
         if(work_center_group_id == "All Work Center Group") title = "Machine : All Machine From All Work Center Group";
-        else if(machine_no == "All Machine") title = "Machine : All Machine From " + work_center_group_id;
+        else if(machine_no == "All Machine") title = "Machine : All Machine From " + get_wcg_name(work_center_group_id);
         else title = "Machine : " + machine_no;
         set_data();
+      }
+
+      function set_data(){
+        get_data('DAY', function(result, error_result) {
+          day_shift = result;
+          set_bar_color('DAY', error_result);
+          get_data('NIGHT', function(result, error_result) {
+            night_shift = result;
+            set_bar_color('NIGHT', error_result);
+            data = {
+              labels: labels,
+              datasets: [
+              {
+                label: 'Day Shift ',
+                type: 'bar',
+                backgroundColor: day_bar_color,
+                borderColor: day_bar_border_color,
+                borderWidth: 1,
+                data: day_shift
+              },
+              {
+                label: 'Night Shift ',
+                type: 'bar',
+                backgroundColor: night_bar_color,
+                borderColor: night_bar_border_color,
+                borderWidth: 1,
+                data: night_shift
+              },
+              {
+                label: 'Maximum Per Shift',
+                type: 'line',
+                borderColor: 'rgb(0,0,0)',
+                pointRadius: 0,
+                borderWidth: 0.3,
+                pointHitRadius: 0,
+                data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
+              },
+              {
+                label: 'Maximum Per Day',
+                type: 'line',
+                borderColor: 'rgb(0,0,0)',
+                pointRadius: 0,
+                borderWidth: 0.3,
+                pointHitRadius: 0,
+                data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
+              },
+            ]
+            };
+            var currentdate = new Date();
+            var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+            postload(datetime);
+            set_statistic();
+            barChart.data.labels = labels;
+            barChart.data = data;
+            barChart.options.plugins.subtitle.text = sub_title;
+            barChart.options.plugins.title.text = title;
+            barChart.options.scales.x.title.text = x_title;
+            barChart.draw();
+            barChart.update();
+          });
+        });
+      }
+
+      function get_data(shift, callback){
+        var type = $('#type').val();
+        var year = $('#year').val();
+        var month = $('#month').val();
+        var work_center_group_id = $('#work_center_group_id').val();
+        var work_center_group_id_count = $('#work_center_group_id_count').val();
+        var machine_no = $('#machine_no').val();
+        var machine_count = $('#machine_count').val();
+        var data_error = 'FALSE';
+        if($('#data_error').is(":checked")){
+          data_error = 'TRUE';
+        }
+        $.ajax({
+          url: '/get_data/',
+          data: {
+            'shift' : shift,
+            'x_count' : x_count,
+            'type': type,
+            'year': year,
+            'month': month,
+            'work_center_group_id': work_center_group_id,
+            'machine_no': machine_no,
+            'data_error' : data_error,
+          },
+          dataType: 'json',
+          success: function (data) {
+            var result = [];
+            var error_result = [];
+            result = data.result;
+            error_result = data.error_result;
+            callback(result, error_result);
+          }
+        });
+      }
+
+      function set_bar_color(shift, error_result){
+        // DAY = 'rgb(249,213,110)' , NIGHT = 'rgb(130,177,254)' , RED 'rgb(249,213,110)'
+        if(shift == 'DAY'){
+          day_bar_color = [];
+          day_bar_border_color = [];
+          for(var i = 0;i < error_result.length;i++){
+            day_bar_color.push('rgb(249,213,110)');
+            if(error_result[i] == true){
+              day_bar_border_color.push('rgb(255,0,0)');
+            } else {
+              day_bar_border_color.push('rgb(249,213,110)');
+            }
+          }
+        } else {
+          night_bar_color = [];
+          night_bar_border_color = [];
+          for(var i = 0;i < error_result.length;i++){
+            night_bar_color.push('rgb(130,177,254)');
+            if(error_result[i] == true){
+              night_bar_border_color.push('rgb(255,0,0)');
+            } else {
+              night_bar_border_color.push('rgb(130,177,254)');
+            }
+          }
+        }
       }
 
       function set_statistic(){
@@ -416,6 +475,18 @@
         var sum = all_shift.reduce((a, b) => a + b, 0);
         var avg = (sum / all_shift.length) || 0;
         $('#all_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
+      }
+
+      function update_data(){
+        $.ajax({
+          url: '/update_data/',
+          data: {
+          },
+          dataType: 'json',
+          success: function (data) {
+            location.reload();
+          }
+        });
       }
 
       $('#type').change(function() {
@@ -486,6 +557,18 @@
         }
       });
 
+      $('#data_error').change(function() {
+        if($('#auto_execute').is(":checked")){
+          set_graph_data();
+        }
+      });
+
+      $('#auto_execute').change(function() {
+        if($('#auto_execute').is(":checked")){
+          set_graph_data();
+        }
+      });
+
       function toggleMonthGroup(){
         var type = $('#type').val();
         if(type == "M") {
@@ -510,13 +593,59 @@
         else $('#execute').prop("disabled", false);
       });
 
+      // OTHER FUNCTION
+       function get_date_count(){
+         var year = $('#year').val();
+         var month = $('#month').val();
+         if(month == "FEB" && (parseInt(year)%4) == 0) return 29;
+         else if(month == "FEB") return 28;
+         else if(month == "JAN" || month == "MAR" || month == "MAY" || month == "JUL" || month == "AUG" || month == "OCT" || month == "DEC") return 31;
+         return 30;
+       }
 
-      $("#year").on("keypress keyup blur",function (event) {
-          $(this).val($(this).val().replace(/[^\d].+/, ""));
-           if ((event.which < 48 || event.which > 57)) {
-               event.preventDefault();
-           }
-       });
+       function get_date_labels(){
+         var result = [];
+         for(i = 1;i < x_count + 1;i++){
+           result.push(i);
+         }
+         return result;
+       }
+
+       function get_wcg_name(id){
+         var result = "None";
+         result = $("#work_center_group_id option[value='" + id + "']").text();
+         return result;
+       }
+
+       function preload(){
+         $('#fetch_time').html("FETCHING DATA ...");
+         $('#loading_spinner').prop("hidden", false)
+         $('#loading_space').prop("hidden", false)
+         $('#canvas_1').prop("hidden", true)
+       }
+
+       function postload(datetime){
+         $('#fetch_time').html("FETCH DATA AT ― " + datetime);
+         $('#loading_spinner').prop("hidden", true);
+         $('#loading_space').prop("hidden", true);
+         $('#canvas_1').prop("hidden", false);
+       }
+
+       $("#year").on("keypress keyup blur",function (event) {
+           $(this).val($(this).val().replace(/[^\d].+/, ""));
+            if ((event.which < 48 || event.which > 57)) {
+                event.preventDefault();
+            }
+        });
+
+       function numberWithCommas(x) {
+          return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+       }
+
+       function addZero(x){
+         if(x < 10) return "0" + x
+         return x;
+       }
     </script>
   </body>
 </html>

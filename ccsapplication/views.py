@@ -7,7 +7,9 @@ import random
 import json
 import threading
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import time
+import sys
 
 def get_connection():
     conn = pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;')
@@ -17,9 +19,6 @@ def get_connection():
     return conn
 
 def index(request):
-    # UpdateWorkCenterGroup().start()
-    # UpdateMachine().start()
-    # UpdateTransaction().start()
     workcentergroup_list = WorkCenterGroup.objects.all()
     machine_list = Machine.objects.all()
     context = {
@@ -36,10 +35,10 @@ def get_data(request):
     year = request.GET.get('year')
     month = request.GET.get('month')
     work_center_group_id = request.GET.get('work_center_group_id')
-    work_center_group_id_count = request.GET.get('work_center_group_id_count')
     machine_no = request.GET.get('machine_no')
-    machine_count = request.GET.get('machine_count')
+    data_error = request.GET.get('data_error')
     print("------------------------------------------")
+    print("INCLUDE ERROR DATA : ", data_error)
     print("SHIFT : ", shift)
     print("TYPE : ", type)
     print("YEAR : ", year)
@@ -51,9 +50,10 @@ def get_data(request):
     print("------------------------------------------")
     #-- FETCH DATA FROM DATABASE
     result = []
+    error_result = []
     t0 = time.time()
     for i in range(x_count):
-        trans = Transaction.objects.filter(start_datetime__year=year) #CHECK YEAR
+        trans = Transaction.objects.filter(start_datetime__year=year).order_by('mc') #CHECK YEAR
         if type == 'Y':
             trans = trans.filter(start_datetime__month=(i+1)) #CHECK MONTH
         elif type == 'M':
@@ -71,20 +71,35 @@ def get_data(request):
             wcg = WorkCenterGroup.objects.get(id=work_center_group_id)
             mcs = Machine.objects.filter(wcg=wcg)
             trans = trans.filter(mc__in=mcs)
+        err = False
         temp_time = 0
-        temp_machine_no = "-1"
+        temp_time_same_mc = 0
+        temp_mc_no = "-"
         for t in trans:
             # print(t.mc.no, t.start_datetime, t.stop_datetime, t.operate_time)
-            temp_time += round(float(t.operate_time) / 60)
+            if(temp_mc_no == t.mc.no):
+                temp_time_same_mc += float(t.operate_time)
+            else:
+                if data_error == "FALSE" and temp_time_same_mc > (12 * 60):
+                    temp_time_same_mc = (12 * 60)
+                    err = True
+                temp_time += temp_time_same_mc
+                temp_mc_no = t.mc.no
+                temp_time_same_mc = float(t.operate_time)
+        if data_error == "FALSE" and temp_time_same_mc > (12 * 60):
+            temp_time_same_mc = (12 * 60)
+            err = True
+        temp_time += temp_time_same_mc
         result.append(temp_time)
+        error_result.append(err)
     t1 = time.time()
     print("EXCUTE COMPLETED !")
     print("EXCUTE TIME : ", (t1 - t0))
     print("------------------------------------------")
-    # result = get_random_data(x_count, type, work_center_group_id, work_center_group_id_count, machine_no, machine_count)
     # print(result)
     data = {
         'result' : result,
+        'error_result' : error_result,
     }
     return JsonResponse(data)
 
@@ -105,23 +120,18 @@ def get_machine_list(request):
     }
     return JsonResponse(data)
 
+def update_data(request):
+    UpdateWorkCenterGroup().start()
+    UpdateMachine().start()
+    UpdateTransaction().start()
+    data = {
+    }
+    return JsonResponse(data)
+
 #--------------------------------------------------------------------------------------------------------------------- ETC Function
 def get_month_no(month):
     month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
     return str(month_set.index(month) + 1)
-
-def get_random_data(x_count, type, work_center_group_id, work_center_group_id_count, machine_no, machine_count):
-    result = []
-    for i in range(x_count):
-        coef = 1; # coefficient
-        if(type == "Y"):
-            coef = coef * 30;
-        if(work_center_group_id == "All Work Center Group"):
-            coef = coef * int(machine_count) * int(work_center_group_id_count)
-        if(work_center_group_id != "All Work Center Group" and machine_no == "All Machine"):
-            coef = coef * int(machine_count)
-        result.append(math.floor(random.randint(0, 12) * coef))
-    return result
 
 #--------------------------------------------------------------------------------------------------------------------- Threading
 class UpdateWorkCenterGroup(threading.Thread):
@@ -178,10 +188,17 @@ class UpdateTransaction(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        # Transaction.objects.all().delete()
         all_item = 0
         new_item = 0
+        lastest_tran = last_transaction()
+        start_query_date = lastest_tran.start_datetime + relativedelta(months=-1)
         cursor = get_connection().cursor()
-        queryStr = "SELECT MachineOperatorID, MachineOperatorStart, MachineOperatorStop, MachineOperatorTime FROM L_ProductionOrderRoutingMachineOperator WHERE OperateBy = 'Machine' AND MachineOperatorTime <> 0"
+        queryStr = "SELECT MachineOperatorID, MachineOperatorStart, MachineOperatorStop, MachineOperatorTime"
+        queryStr += " FROM L_ProductionOrderRoutingMachineOperator"
+        queryStr += " WHERE OperateBy = 'Machine' AND MachineOperatorTime <> 0"
+        queryStr += " AND CAST(MachineOperatorStart AS Date) >= '" + start_query_date.strftime("%Y-%m-%d") + "'"
+        queryStr += " ORDER BY MachineOperatorStart"
         cursor.execute(queryStr)
         transaction_list = cursor.fetchall()
         for tran in transaction_list:
@@ -196,6 +213,12 @@ class UpdateTransaction(threading.Thread):
                     new_item += 1
         print("------------------------------------")
         print("--- UPDATE TRANSACTION COMPLETED")
+        print("--- QUERY STATEMENT : " + queryStr)
+        print("--- START QUERY DATE : " + start_query_date.strftime("%Y-%m-%d"))
         print("--- ALL ITEM : " + str(all_item))
         print("--- NEW ITEM : " + str(new_item))
         print("------------------------------------")
+
+def last_transaction():
+    tran = Transaction.objects.last()
+    return tran
