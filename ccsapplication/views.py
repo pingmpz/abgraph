@@ -133,6 +133,17 @@ def get_month_no(month):
     month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
     return str(month_set.index(month) + 1)
 
+def time_year(type, year, month):
+    if type == "M":
+        return 1
+    elif month == "FEB" and int(year)%4 == 0:
+        return 29
+    elif month == "FEB" :
+        return 28
+    elif month == "JAN" or month == "MAR" or month == "MAY" or month == "JUL" or month == "AUG" or month == "OCT" or month == "DEC":
+        return 31
+    return 30
+
 #--------------------------------------------------------------------------------------------------------------------- Threading
 class UpdateWorkCenterGroup(threading.Thread):
     def __init__(self):

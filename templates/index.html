@@ -182,6 +182,7 @@
                           <div class="sk-circle12 sk-circle" style="height: 400%; width: 400%"></div>
                         </div>
                         <div id="loading_space"><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></div>
+                        <p>* Error Data on year graph still not correct ** hide tooltip of line graph *** add top (%) on bar</p>
                       </div>
                     </div>
                   </div>
@@ -230,10 +231,12 @@
       var data = {};
       var day_shift = [];
       var night_shift = [];
-      var day_bar_color = [];
+      var day_bar_color = ['rgb(249,213,110)'];
       var day_bar_border_color = [];
-      var night_bar_color = [];
+      var night_bar_color = ['rgb(130,177,254)'];
       var night_bar_border_color = [];
+      var line_1_color = ['rgb(182,145,255)'];
+      var line_2_color = ['rgb(157,208,77)'];
       var footer = (tooltipItems) => {
           let sum = i = 0;
           let data = [0, 0];
@@ -358,24 +361,6 @@
                 borderWidth: 1,
                 data: night_shift
               },
-              {
-                label: 'Maximum Per Shift',
-                type: 'line',
-                borderColor: 'rgb(0,0,0)',
-                pointRadius: 0,
-                borderWidth: 0.3,
-                pointHitRadius: 0,
-                data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
-              },
-              {
-                label: 'Maximum Per Day',
-                type: 'line',
-                borderColor: 'rgb(0,0,0)',
-                pointRadius: 0,
-                borderWidth: 0.3,
-                pointHitRadius: 0,
-                data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
-              },
             ]
             };
             var currentdate = new Date();
@@ -384,6 +369,7 @@
             set_statistic();
             barChart.data.labels = labels;
             barChart.data = data;
+            addLine();
             barChart.options.plugins.subtitle.text = sub_title;
             barChart.options.plugins.title.text = title;
             barChart.options.scales.x.title.text = x_title;
@@ -429,12 +415,10 @@
       }
 
       function set_bar_color(shift, error_result){
-        // DAY = 'rgb(249,213,110)' , NIGHT = 'rgb(130,177,254)' , RED 'rgb(249,213,110)'
+        // DAY = 'rgb(249,213,110)' , NIGHT = 'rgb(130,177,254)' , RED 'rgb(249,213,110)', BLACK 'rgb(0,0,0)', WHITE 'rgb(255,255,255)'
         if(shift == 'DAY'){
-          day_bar_color = [];
           day_bar_border_color = [];
           for(var i = 0;i < error_result.length;i++){
-            day_bar_color.push('rgb(249,213,110)');
             if(error_result[i] == true){
               day_bar_border_color.push('rgb(255,0,0)');
             } else {
@@ -442,10 +426,8 @@
             }
           }
         } else {
-          night_bar_color = [];
           night_bar_border_color = [];
           for(var i = 0;i < error_result.length;i++){
-            night_bar_color.push('rgb(130,177,254)');
             if(error_result[i] == true){
               night_bar_border_color.push('rgb(255,0,0)');
             } else {
@@ -453,6 +435,33 @@
             }
           }
         }
+      }
+
+      function addLine(){
+        var type = $('#type').val();
+        var work_center_group_id = $('#work_center_group_id').val();
+        var machine_no = $('#machine_no').val();
+        if(work_center_group_id == "All Work Center Group" || machine_no == "All Machine" || type == "Y") return;
+        barChart.data.datasets.push({
+            label: 'Maximum Per Shift',
+            type: 'line',
+            backgroundColor: line_1_color,
+            borderColor: line_1_color,
+            pointRadius: 0,
+            borderWidth: 1,
+            pointHitRadius: 0,
+            data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
+          });
+        barChart.data.datasets.push({
+          label: 'Maximum Per Day',
+          type: 'line',
+          backgroundColor: line_2_color,
+          borderColor: line_2_color,
+          pointRadius: 0,
+          borderWidth: 1,
+          pointHitRadius: 0,
+          data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
+        });
       }
 
       function set_statistic(){
