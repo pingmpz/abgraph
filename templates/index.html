@@ -199,7 +199,9 @@
     <script src="{% static "vendors/@coreui/icons/js/svgxuse.min.js" %}"></script>
     <!--<![endif]-->
     <script src="{% static "vendors/jquery/js/jquery.min.js" %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <!-- <script src="static/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js"></script> -->
     <script src="{% static "js/charts.js" %}"></script>
     <script src="{% static "js/loading-buttons.js" %}"></script>
@@ -250,9 +252,11 @@
           + '\nTotal Minutes ― ' + numberWithCommas(sum)
           + '\nTotal Hours ― ' + Math.floor(sum/60) + ":" + addZero(sum%60);
       };
+
       var config = {
         type: chart_type,
         data: data,
+        plugins: [ChartDataLabels],
         options: {
           plugins: {
             title: {
@@ -268,6 +272,25 @@
                 footer: footer,
               }
             },
+            datalabels: {
+          		formatter: (value, ctx) => {
+          			let datasets = ctx.chart.data.datasets; // Tried `.filter(ds => !ds._meta.hidden);` without success
+          			if (ctx.datasetIndex === datasets.length - 1) {
+          				let sum = 0;
+          				datasets.map(dataset => {
+          					sum += dataset.data[ctx.dataIndex];
+          				});
+                  var result = Math.floor(((sum-1440)/1440)*100) + "%";
+                  if(sum == 1440) result = "";
+          				return result;
+          			}
+          			else {
+          				return '';
+          			}
+          		},
+          		anchor: 'top',
+          		align: 'end'
+          	}
           },
           responsive: true,
           scales: {
@@ -287,23 +310,6 @@
             }
           }
         },
-          draw: function () {
-          Chart.types.Line.prototype.draw.apply(this, arguments);
-
-          var point = this.datasets[0].points[this.options.lineAtIndex]
-          var scale = this.scale
-
-          // draw line
-          this.chart.ctx.beginPath();
-          this.chart.ctx.moveTo(point.x, scale.startPoint + 24);
-          this.chart.ctx.strokeStyle = '#ff0000';
-          this.chart.ctx.lineTo(point.x, scale.endPoint);
-          this.chart.ctx.stroke();
-
-          // write TODAY
-          this.chart.ctx.textAlign = 'center';
-          this.chart.ctx.fillText("TODAY", point.x, scale.startPoint + 12);
-        }
       };
 
       var barChart = new Chart(document.getElementById('canvas_1'), config);
@@ -373,7 +379,6 @@
             barChart.options.plugins.subtitle.text = sub_title;
             barChart.options.plugins.title.text = title;
             barChart.options.scales.x.title.text = x_title;
-            barChart.draw();
             barChart.update();
           });
         });
