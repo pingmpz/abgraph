@@ -98,17 +98,17 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-6">
+                              <label class="col-md-9">
                                 <div class="form-check checkbox">
-                                  <input class="form-check-input" type="checkbox" id="data_error" name="data_error">
-                                  <label class="form-check-label" for="data_error">Include Error Data</label>
+                                  <input class="form-check-input" type="checkbox" id="data_error" name="data_error" checked>
+                                  <label class="form-check-label" for="data_error">Exclude Error Data <small>― work only on a month graph</small></label>
                                 </div>
                                 <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
                                   <label class="form-check-label" for="auto_execute">Auto Execute</label>
                                 </div>
                               </label>
-                              <label class="col-md-6 text-right">
+                              <label class="col-md-3 text-right">
                                 <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph_data()" disabled>Execute</button>
                               </label>
                             </div>
@@ -182,7 +182,6 @@
                           <div class="sk-circle12 sk-circle" style="height: 400%; width: 400%"></div>
                         </div>
                         <div id="loading_space"><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></div>
-                        <p>* Error Data on year graph still not correct ** hide tooltip of line graph *** add top (%) on bar</p>
                       </div>
                     </div>
                   </div>
@@ -202,6 +201,7 @@
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.0.2/chartjs-plugin-annotation.min.js"></script>
     <!-- <script src="static/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js"></script> -->
     <script src="{% static "js/charts.js" %}"></script>
     <script src="{% static "js/loading-buttons.js" %}"></script>
@@ -237,8 +237,8 @@
       var day_bar_border_color = [];
       var night_bar_color = ['rgb(130,177,254)'];
       var night_bar_border_color = [];
-      var line_1_color = ['rgb(182,145,255)'];
-      var line_2_color = ['rgb(157,208,77)'];
+      var line_1_color = ['rgb(255,255,255,0)'];
+      var line_2_color = ['rgb(255,255,255,0)'];
       var footer = (tooltipItems) => {
           let sum = i = 0;
           let data = [0, 0];
@@ -272,23 +272,47 @@
                 footer: footer,
               }
             },
+            autocolors: false,
+            annotation: {
+                annotations: [{
+                    id: '720',
+                    type: 'line',
+                    mode: 'horizontal',
+                    yMin: 720,
+                    yMax: 720,
+                    borderColor: line_1_color,
+                    borderWidth: 1,
+                },
+                {
+                    id: '1440',
+                    type: 'line',
+                    mode: 'horizontal',
+                    yMin: 1440,
+                    yMax: 1440,
+                    borderColor: line_2_color,
+                    borderWidth: 1,
+                }]
+            },
             datalabels: {
           		formatter: (value, ctx) => {
           			let datasets = ctx.chart.data.datasets; // Tried `.filter(ds => !ds._meta.hidden);` without success
-          			if (ctx.datasetIndex === datasets.length - 1) {
-          				let sum = 0;
-          				datasets.map(dataset => {
-          					sum += dataset.data[ctx.dataIndex];
-          				});
-                  var result = Math.floor(((sum-1440)/1440)*100) + "%";
-                  if(sum == 1440) result = "";
-          				return result;
-          			}
-          			else {
-          				return '';
-          			}
+                var type = $('#type').val();
+                var machine_no = $('#machine_no').val();
+            		if (ctx.datasetIndex === datasets.length - 1) {
+            			let sum = 0;
+            			datasets.map(dataset => {
+            				sum += dataset.data[ctx.dataIndex];
+            			});
+                  result = Math.floor((sum/1440)*100) + "%";
+                  if(Math.floor((sum/1440)*100) == 0) result = "";
+                  if(machine_no == "All Machine" || type == "Y") result = "";
+            			return result;
+            		}
+            		else {
+            			return '';
+            		}
           		},
-          		anchor: 'top',
+          		anchor: 'end',
           		align: 'end'
           	}
           },
@@ -371,15 +395,15 @@
             };
             var currentdate = new Date();
             var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-            postload(datetime);
             set_statistic();
+            set_line_color();
             barChart.data.labels = labels;
             barChart.data = data;
-            addLine();
             barChart.options.plugins.subtitle.text = sub_title;
             barChart.options.plugins.title.text = title;
             barChart.options.scales.x.title.text = x_title;
             barChart.update();
+            postload(datetime);
           });
         });
       }
@@ -392,9 +416,9 @@
         var work_center_group_id_count = $('#work_center_group_id_count').val();
         var machine_no = $('#machine_no').val();
         var machine_count = $('#machine_count').val();
-        var data_error = 'FALSE';
+        var data_error = 'TRUE';
         if($('#data_error').is(":checked")){
-          data_error = 'TRUE';
+          data_error = 'FALSE';
         }
         $.ajax({
           url: '/get_data/',
@@ -419,6 +443,18 @@
         });
       }
 
+      function set_line_color(){
+        var type = $('#type').val();
+        var machine_no = $('#machine_no').val();
+        if(machine_no == "All Machine" || type == "Y"){
+          barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
+          barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(255,255,255,0)';
+        } else {
+          barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
+          barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(0,0,0)';
+        }
+      }
+
       function set_bar_color(shift, error_result){
         // DAY = 'rgb(249,213,110)' , NIGHT = 'rgb(130,177,254)' , RED 'rgb(249,213,110)', BLACK 'rgb(0,0,0)', WHITE 'rgb(255,255,255)'
         if(shift == 'DAY'){
@@ -440,33 +476,6 @@
             }
           }
         }
-      }
-
-      function addLine(){
-        var type = $('#type').val();
-        var work_center_group_id = $('#work_center_group_id').val();
-        var machine_no = $('#machine_no').val();
-        if(work_center_group_id == "All Work Center Group" || machine_no == "All Machine" || type == "Y") return;
-        barChart.data.datasets.push({
-            label: 'Maximum Per Shift',
-            type: 'line',
-            backgroundColor: line_1_color,
-            borderColor: line_1_color,
-            pointRadius: 0,
-            borderWidth: 1,
-            pointHitRadius: 0,
-            data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
-          });
-        barChart.data.datasets.push({
-          label: 'Maximum Per Day',
-          type: 'line',
-          backgroundColor: line_2_color,
-          borderColor: line_2_color,
-          pointRadius: 0,
-          borderWidth: 1,
-          pointHitRadius: 0,
-          data: [720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720,720]
-        });
       }
 
       function set_statistic(){
@@ -505,6 +514,12 @@
 
       $('#type').change(function() {
         toggleMonthGroup();
+        if($('#type').val() == "Y"){
+          $('#data_error').prop("disabled", true);
+          $('#data_error').prop("checked", false);
+        } else {
+          $('#data_error').prop("disabled", false);
+        }
         if($('#auto_execute').is(":checked")){
           set_graph_data();
         }
