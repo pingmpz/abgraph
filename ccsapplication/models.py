@@ -8,6 +8,7 @@ class WorkCenterGroup(models.Model):
 class Machine(models.Model):
     no = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=50, default="-")
+    exp_hrs = models.CharField(max_length=50, default="8")
     wcg = models.ForeignKey(WorkCenterGroup, on_delete=models.CASCADE)
 
 class Transaction(models.Model):

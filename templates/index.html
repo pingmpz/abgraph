@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <!--
 * CoreUI Pro based Bootstrap Admin Template
@@ -34,7 +34,7 @@
                       <div class="card" id="card_filter">
                         <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions">
-                            <button type="button" class="btn btn-link" id="update_data" name="update_data" onclick="update_data()">Update Data</button>
+                            <button type="button" class="btn btn-link" id="update_data" name="update_data" onclick="update_data()" hidden>Update Data</button>
                           </div>
                         </div>
                         <div class="card-body">
@@ -77,21 +77,21 @@
                               <label class="col-md-4 col-form-label">Work Center Group</label>
                               <div class="col-md-8">
                                 <select class="form-control" id="work_center_group_id" name="work_center_group_id">
-                                  <option value="All Work Center Group" selected>All Work Center Group</option>
+                                  <option value="All Work Center Group">All Work Center Group</option>
                                   {% for workcentergroup in workcentergroup_list %}
-                                  <option value="{{ workcentergroup.id }}">{{ workcentergroup.name }}</option>
+                                  <option value="{{ workcentergroup.id }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ workcentergroup.name }}</option>
                                   {% endfor %}
                                 </select>
                                 <input class="form-control" type="text" id="work_center_group_id_count" name="work_center_group_id_count" value="{{workcentergroup_list|length}}" hidden>
                               </div>
                             </div>
-                            <div class="form-group row" id="machine_no_group" hidden>
+                            <div class="form-group row" id="machine_no_group">
                               <label class="col-md-4 col-form-label">Machine No</label>
                               <div class="col-md-8">
                                 <select class="form-control" id="machine_no" name="machine_no">
-                                  <option value="All Machine" selected>All Machine ({{machine_list|length}})</option>
+                                  <option value="All Machine">All Machine ({{machine_list|length}})</option>
                                   {% for machine in machine_list %}
-                                  <option value="{{ machine.no }}">{{ machine.no }} | {{ machine.name }}</option>
+                                  <option value="{{ machine.no }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ machine.no }} | {{ machine.name }}</option>
                                   {% endfor %}
                                 </select>
                                 <input class="form-control" type="text" id="machine_count" name="machine_count" value="{{machine_list|length}}" hidden>
