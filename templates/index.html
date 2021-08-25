@@ -34,7 +34,7 @@
                       <div class="card" id="card_filter">
                         <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions">
-                            <button type="button" class="btn btn-link" id="update_data" name="update_data" onclick="update_data()" hidden>Update Data</button>
+                            <button type="button" class="btn btn-link" id="update_data" name="update_data" onclick="update_data()">Update Data</button>
                           </div>
                         </div>
                         <div class="card-body">
@@ -275,21 +275,12 @@
             autocolors: false,
             annotation: {
                 annotations: [{
-                    id: '720',
+                    id: 'exp_hrs',
                     type: 'line',
                     mode: 'horizontal',
-                    yMin: 720,
-                    yMax: 720,
+                    yMin: 0,
+                    yMax: 0,
                     borderColor: line_1_color,
-                    borderWidth: 1,
-                },
-                {
-                    id: '1440',
-                    type: 'line',
-                    mode: 'horizontal',
-                    yMin: 1440,
-                    yMax: 1440,
-                    borderColor: line_2_color,
                     borderWidth: 1,
                 }]
             },
@@ -448,10 +439,8 @@
         var machine_no = $('#machine_no').val();
         if(machine_no == "All Machine" || type == "Y"){
           barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
-          barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(255,255,255,0)';
         } else {
           barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
-          barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(0,0,0)';
         }
       }
 
