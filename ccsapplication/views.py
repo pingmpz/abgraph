@@ -27,6 +27,15 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+def index0(request):
+    workcentergroup_list = WorkCenterGroup.objects.all()
+    machine_list = Machine.objects.all()
+    context = {
+        'workcentergroup_list' : workcentergroup_list,
+        'machine_list' : machine_list,
+    }
+    return render(request, 'index0.html', context)
+
 def get_data(request):
     #-- REQUEST DATA FORM FRONT
     shift = request.GET.get('shift')
@@ -150,6 +159,7 @@ class UpdateWorkCenterGroup(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        print("--- UPDATING WORK CENTER GROUP ---")
         all_item = 0
         new_item = 0
         cursor = get_connection().cursor()
@@ -162,17 +172,16 @@ class UpdateWorkCenterGroup(threading.Thread):
                 wcg_new = WorkCenterGroup(name=wcg.WorkCenterGroup)
                 wcg_new.save()
                 new_item += 1
-        print("------------------------------------------")
         print("--- UPDATE WORK CENTER GROUP COMPLETED")
-        print("--- ALL ITEM : " + str(all_item))
-        print("--- NEW ITEM : " + str(new_item))
-        print("------------------------------------------")
+        print("--- ALL RECORD : " + str(all_item))
+        print("--- NEW RECORD  : " + str(new_item))
 
 class UpdateMachine(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
     def run(self):
+        print("--- UPDATING MACHINE ---")
         all_item = 0
         new_item = 0
         cursor = get_connection().cursor()
@@ -188,11 +197,9 @@ class UpdateMachine(threading.Thread):
                     mc_new = Machine(no=mc[0],name=mc[1],wcg=wcg)
                     mc_new.save()
                     new_item += 1
-        print("--------------------------------")
         print("--- UPDATE MACHINE COMPLETED")
-        print("--- ALL ITEM : " + str(all_item))
-        print("--- NEW ITEM : " + str(new_item))
-        print("--------------------------------")
+        print("--- ALL RECORD : " + str(all_item))
+        print("--- NEW RECORD  : " + str(new_item))
 
 class UpdateTransaction(threading.Thread):
     def __init__(self):
@@ -200,6 +207,7 @@ class UpdateTransaction(threading.Thread):
 
     def run(self):
         # Transaction.objects.all().delete()
+        print("--- UPDATING TRANSACTION COMPLETED ---")
         all_item = 0
         new_item = 0
         lastest_tran = last_transaction()
@@ -222,13 +230,11 @@ class UpdateTransaction(threading.Thread):
                     tran_new = Transaction(mc=mc,start_datetime=tran[1],stop_datetime=tran[2],operate_time=tran[3])
                     tran_new.save()
                     new_item += 1
-        print("------------------------------------")
         print("--- UPDATE TRANSACTION COMPLETED")
-        print("--- QUERY STATEMENT : " + queryStr)
+        # print("--- QUERY STATEMENT : " + queryStr)
         print("--- START QUERY DATE : " + start_query_date.strftime("%Y-%m-%d"))
-        print("--- ALL ITEM : " + str(all_item))
-        print("--- NEW ITEM : " + str(new_item))
-        print("------------------------------------")
+        print("--- ALL RECORD : " + str(all_item))
+        print("--- NEW RECORD  : " + str(new_item))
 
 def last_transaction():
     tran = Transaction.objects.last()
