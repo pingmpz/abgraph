@@ -91,7 +91,7 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-9">
+                              <!-- <label class="col-md-9">
                                 <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
                                   <label class="form-check-label" for="auto_execute">Auto Execute</label>
@@ -99,7 +99,7 @@
                               </label>
                               <label class="col-md-3 text-right">
                                 <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph()">Execute</button>
-                              </label>
+                              </label> -->
                             </div>
                           </div>
                         </div>
@@ -255,9 +255,7 @@
       $('#year').on("keypress keyup keydown",function() {
         var year = $('#year').val();
         if(year.length == 4){
-          if($('#auto_execute').is(":checked")){
-            set_graph();
-          }
+          set_graph();
           $('#year').removeClass("is-invalid");
           $('#year').addClass("is-valid");
         } else {
@@ -274,9 +272,7 @@
        });
 
        $('#month').change(function() {
-         if($('#auto_execute').is(":checked")){
-           set_graph();
-         }
+         set_graph();
        });
 
        $('#wcg_id').change(function() {
@@ -289,9 +285,7 @@
              mc_no.appendChild(opt);
            }
            $('#machine_count').val(machine_list.length);
-           if($('#auto_execute').is(":checked")){
-             set_graph();
-           }
+           set_graph();
          });
        });
 
@@ -310,9 +304,7 @@
        }
 
        $('#mc_no').change(function() {
-         if($('#auto_execute').is(":checked")){
            set_graph();
-         }
        });
 
     </script>
