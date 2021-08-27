@@ -16,10 +16,13 @@
     <meta name="description" content="CoreUI - Open Source Bootstrap Admin Template">
     <meta name="author" content="Łukasz Holeczek">
     <meta name="keyword" content="Bootstrap,Admin,Template,Open,Source,jQuery,CSS,HTML,RWD,Dashboard">
-    <title>Machine Running Time</title>
+    <title>AB Graph Applcation</title>
     <!-- Main styles for this application-->
     <link href="{% static "css/style.css" %}" rel="stylesheet">
     <link href="{% static "vendors/@coreui/chartjs/css/coreui-chartjs.css" %}" rel="stylesheet">
+    <style media="screen">
+
+    </style>
   </head>
   <body class="c-app c-no-layout-transition">
     <div class="c-wrapper">
@@ -28,7 +31,8 @@
           <div class="container-fluid">
             <div class="fade-in">
               <div class="row">
-                <div class="col-4">
+                <!-- Filter -->
+                <div class="col-3">
                   <div class="row">
                     <div class="col-12">
                       <div class="card" id="card_filter">
@@ -65,24 +69,22 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-4 col-form-label">Work Center Group</label>
+                              <label class="col-md-4 col-form-label"><small>Work Center Group</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="work_center_group_id" name="work_center_group_id">
-                                  <option value="All Work Center Group">All Work Center Group</option>
+                                <select class="form-control" id="wcg_id" name="wcg_id">
                                   {% for workcentergroup in workcentergroup_list %}
-                                  <option value="{{ workcentergroup.id }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ workcentergroup.name }}</option>
+                                  <option value="{{ workcentergroup.id }}">{{ workcentergroup.name }}</option>
                                   {% endfor %}
                                 </select>
-                                <input class="form-control" type="text" id="work_center_group_id_count" name="work_center_group_id_count" value="{{workcentergroup_list|length}}" hidden>
+                                <input class="form-control" type="text" id="wcg_id_count" name="wcg_id_count" value="{{workcentergroup_list|length}}" hidden>
                               </div>
                             </div>
-                            <div class="form-group row" id="machine_no_group">
+                            <div class="form-group row" id="mc_no_group">
                               <label class="col-md-4 col-form-label">Machine No</label>
                               <div class="col-md-8">
-                                <select class="form-control" id="machine_no" name="machine_no">
-                                  <option value="All Machine">All Machine ({{machine_list|length}})</option>
+                                <select class="form-control" id="mc_no" name="mc_no">
                                   {% for machine in machine_list %}
-                                  <option value="{{ machine.no }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ machine.no }} | {{ machine.name }}</option>
+                                  <option value="{{ machine.no }}">{{ machine.no }} | {{ machine.name }}</option>
                                   {% endfor %}
                                 </select>
                                 <input class="form-control" type="text" id="machine_count" name="machine_count" value="{{machine_list|length}}" hidden>
@@ -91,16 +93,12 @@
                             <div class="form-group row">
                               <label class="col-md-9">
                                 <div class="form-check checkbox">
-                                  <input class="form-check-input" type="checkbox" id="data_error" name="data_error" checked>
-                                  <label class="form-check-label" for="data_error">Fixed Error Data <small>― work only on a month graph</small></label>
-                                </div>
-                                <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
                                   <label class="form-check-label" for="auto_execute">Auto Execute</label>
                                 </div>
                               </label>
                               <label class="col-md-3 text-right">
-                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph_data()" disabled>Execute</button>
+                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph()">Execute</button>
                               </label>
                             </div>
                           </div>
@@ -110,14 +108,14 @@
                   </div>
                 </div>
                 <!-- Machine Running Time -->
-                <div class="col-8">
+                <div class="col-9">
                   <div class="card">
                     <div class="card-header"><strong>Machine Running Time</strong>
                       <div class="card-header-actions"><small id="fetch_time">FETCH DATA AT ― NONE</small></div>
                     </div>
                     <div class="card-body">
                       <div class="c-chart-wrapper">
-                        <canvas id="canvas_1"></canvas>
+                        <div id="canvas_1"></div>
                         <div class="sk-fading-circle" id="loading_spinner" hidden>
                           <div class="sk-circle1 sk-circle" style="height: 400%; width: 400%"></div>
                           <div class="sk-circle2 sk-circle" style="height: 400%; width: 400%"></div>
@@ -149,14 +147,8 @@
     <script src="{% static "vendors/@coreui/icons/js/svgxuse.min.js" %}"></script>
     <!--<![endif]-->
     <script src="{% static "vendors/jquery/js/jquery.min.js" %}"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script> -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.0.2/chartjs-plugin-annotation.min.js"></script>
-    <!-- <script src="static/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js"></script> -->
-    <script src="{% static "js/charts.js" %}"></script>
     <script src="{% static "js/loading-buttons.js" %}"></script>
-    <!-- <script src="index.js"></script> -->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function(event) {
         setTimeout(function() {
@@ -164,270 +156,87 @@
         }, 2000);
       });
 
+      //-- INITIALIZE
       $( document ).ready(function() {
           var currentdate = new Date();
           $("#year").val(currentdate.getFullYear());
           $("#month").val(month_set[currentdate.getMonth()]);
-          set_graph_data();
+          set_graph();
       });
 
       //-- DATA
       const month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
       const full_month_set = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-      var chart_type = 'bar';
-      var title = 'No Machine';
-      var sub_title = 'No Date';
-      var y_title = 'Minutes';
-      var x_title = 'Date';
-      var x_count = 30;
-      var labels = [];
-      var data = {};
-      var day_shift = [];
-      var night_shift = [];
-      var day_bar_color = ['rgb(249,213,110)'];
-      var day_bar_border_color = [];
-      var night_bar_color = ['rgb(130,177,254)'];
-      var night_bar_border_color = [];
-      var line_1_color = ['rgb(255,255,255,0)'];
-      var line_2_color = ['rgb(255,255,255,0)'];
-      var footer = (tooltipItems) => {
-          let sum = i = 0;
-          let data = [0, 0];
-          tooltipItems.forEach(function(tooltipItem) {
-            data[i] = tooltipItem.parsed.y;
-            sum += tooltipItem.parsed.y;
-            i++;
-          });
-          return 'Day Shift (Hours) ― ' + Math.floor(data[0]/60) + ":" + addZero(data[0]%60)
-          + '\nNight Shift (Hours) ― ' + Math.floor(data[1]/60) + ":" + addZero(data[1]%60)
-          + '\nTotal Minutes ― ' + numberWithCommas(sum)
-          + '\nTotal Hours ― ' + Math.floor(sum/60) + ":" + addZero(sum%60);
-      };
-
-      var config = {
-        type: chart_type,
-        data: data,
-        plugins: [ChartDataLabels],
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: title
-            },
-            subtitle: {
-                display: true,
-                text: sub_title
-            },
-            tooltip: {
-              callbacks: {
-                footer: footer,
-              }
-            },
-            autocolors: false,
-            annotation: {
-                annotations: [{
-                    id: 'exp_hrs',
-                    type: 'line',
-                    mode: 'horizontal',
-                    yMin: 0,
-                    yMax: 0,
-                    borderColor: line_1_color,
-                    borderWidth: 1,
-                }]
-            },
-            datalabels: {
-          		formatter: (value, ctx) => {
-          			let datasets = ctx.chart.data.datasets; // Tried `.filter(ds => !ds._meta.hidden);` without success
-                var machine_no = $('#machine_no').val();
-            		if (ctx.datasetIndex === datasets.length - 1) {
-            			let sum = 0;
-            			datasets.map(dataset => {
-            				sum += dataset.data[ctx.dataIndex];
-            			});
-                  result = Math.floor((sum/1440)*100) + "%";
-                  if(Math.floor((sum/1440)*100) == 0) result = "";
-                  if(machine_no == "All Machine") result = "";
-            			return result;
-            		}
-            		else {
-            			return '';
-            		}
-          		},
-          		anchor: 'end',
-          		align: 'end'
-          	}
-          },
-          responsive: true,
-          scales: {
-            x: {
-              stacked: true,
-              title: {
-                display: true,
-                text: x_title
-              }
-            },
-            y: {
-              stacked: true,
-              title: {
-                display: true,
-                text: y_title
-              }
-            }
-          }
-        },
-      };
-
-      var barChart = new Chart(document.getElementById('canvas_1'), config);
-
-      //-- MAIN FUNCTION
-      function set_graph_data(){
+      //-- MAIN GRAPH
+      function set_graph(){
         preload();
-        var year = $('#year').val();
-        var month = $('#month').val();
-        var work_center_group_id = $('#work_center_group_id').val();
-        var work_center_group_id_count = $('#work_center_group_id_count').val();
-        var machine_no = $('#machine_no').val();
-        var machine_count = $('#machine_count').val();
-        sub_title = full_month_set[month_set.indexOf(month)] + " " + year;
-        x_count = get_date_count();
-        labels = get_date_labels();
-        x_title = 'Date';
-
-        if(work_center_group_id == "All Work Center Group") title = "Machine : All Machine From All Work Center Group";
-        else if(machine_no == "All Machine") title = "Machine : All Machine From " + get_wcg_name(work_center_group_id);
-        else title = "Machine : " + machine_no;
-        set_data();
-      }
-
-      function set_data(){
-        get_data('DAY', function(result, error_result) {
-          day_shift = result;
-          set_bar_color('DAY', error_result);
-          get_data('NIGHT', function(result, error_result) {
-            night_shift = result;
-            set_bar_color('NIGHT', error_result);
-            data = {
-              labels: labels,
-              datasets: [
-              {
-                label: 'Day Shift ',
-                type: 'bar',
-                backgroundColor: day_bar_color,
-                borderColor: day_bar_border_color,
-                borderWidth: 1,
-                data: day_shift
-              },
-              {
-                label: 'Night Shift ',
-                type: 'bar',
-                backgroundColor: night_bar_color,
-                borderColor: night_bar_border_color,
-                borderWidth: 1,
-                data: night_shift
-              },
-            ]
+        google.charts.load("current", {packages:["timeline"]});
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+          var container = document.getElementById('canvas_1');
+          var chart = new google.visualization.Timeline(container);
+          var dataTable = new google.visualization.DataTable();
+          dataTable.addColumn({ type: 'string', id: 'Date' });
+          dataTable.addColumn({ type: 'string', id: 'Name' });
+          dataTable.addColumn({ type: 'string', role: 'style' });
+          dataTable.addColumn({ type: 'date', id: 'Start' });
+          dataTable.addColumn({ type: 'date', id: 'End' });
+          dataTable.addRows([[ 'Day', '', 'opacity: 0', new Date(0,0,0,0,0,0),  new Date(0,0,0,24,0,0) ]]);
+          get_data(function(result) {
+            console.log(result)
+            for(var i = 0;i < result.length;i++){
+              day = result[i][0]
+              name = result[i][1]
+              color = result[i][2]
+              start_hrs = result[i][3]
+              start_min = result[i][4]
+              end_hrs = result[i][5]
+              end_min = result[i][6]
+              dataTable.addRows([[ day, name, color, new Date(0,0,0,start_hrs,start_min,0),  new Date(0,0,0,end_hrs,end_min,0) ]]);
+            }
+            var options = {
+                width: $(window).width() * 0.7,
+                height: $(window).height() * 0.9,
+                timeline: { rowLabelStyle: { fontSize: 12 }, barLabelStyle: { fontSize: 7 } },
             };
-            var currentdate = new Date();
-            var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-            set_statistic();
-            set_line_color();
-            barChart.data.labels = labels;
-            barChart.data = data;
-            barChart.options.plugins.subtitle.text = sub_title;
-            barChart.options.plugins.title.text = title;
-            barChart.options.scales.x.title.text = x_title;
-            barChart.update();
-            postload(datetime);
+            chart.draw(dataTable, options);
           });
-        });
+        }
+        postload();
       }
 
-      function get_data(shift, callback){
+      function get_data(callback){
         var year = $('#year').val();
         var month = $('#month').val();
-        var work_center_group_id = $('#work_center_group_id').val();
-        var work_center_group_id_count = $('#work_center_group_id_count').val();
-        var machine_no = $('#machine_no').val();
-        var machine_count = $('#machine_count').val();
-        var data_error = 'TRUE';
-        if($('#data_error').is(":checked")){
-          data_error = 'FALSE';
-        }
+        var mc_no = $('#mc_no').val();
         $.ajax({
-          url: '/get_data/',
+          url: '/get_data0/',
           data: {
-            'shift' : shift,
-            'x_count' : x_count,
-            'type' : 'M',
-            'year': year,
-            'month': month,
-            'work_center_group_id': work_center_group_id,
-            'machine_no': machine_no,
-            'data_error' : data_error,
+            'year' : year,
+            'month' : month,
+            'mc_no' : mc_no,
           },
           dataType: 'json',
           success: function (data) {
-            var result = [];
-            var error_result = [];
-            result = data.result;
-            error_result = data.error_result;
-            callback(result, error_result);
+            callback(data.result);
           }
         });
       }
 
-      function set_line_color(){
-        var machine_no = $('#machine_no').val();
-        if(machine_no == "All Machine"){
-          barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
-        } else {
-          barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
-        }
+      function preload(){
+        $('#fetch_time').html("FETCHING DATA ...");
+        $('#loading_spinner').prop("hidden", false)
+        $('#loading_space').prop("hidden", false)
+        $('#canvas_1').prop("hidden", true)
       }
 
-      function set_bar_color(shift, error_result){
-        // DAY = 'rgb(249,213,110)' , NIGHT = 'rgb(130,177,254)' , RED 'rgb(249,213,110)', BLACK 'rgb(0,0,0)', WHITE 'rgb(255,255,255)'
-        if(shift == 'DAY'){
-          day_bar_border_color = [];
-          for(var i = 0;i < error_result.length;i++){
-            if(error_result[i] == true){
-              day_bar_border_color.push('rgb(255,0,0)');
-            } else {
-              day_bar_border_color.push('rgb(249,213,110)');
-            }
-          }
-        } else {
-          night_bar_border_color = [];
-          for(var i = 0;i < error_result.length;i++){
-            if(error_result[i] == true){
-              night_bar_border_color.push('rgb(255,0,0)');
-            } else {
-              night_bar_border_color.push('rgb(130,177,254)');
-            }
-          }
-        }
-      }
-
-      function set_statistic(){
-        $('#day_min').html(Math.min(...day_shift));
-        $('#day_max').html(Math.max(...day_shift));
-        var sum = day_shift.reduce((a, b) => a + b, 0);
-        var avg = (sum / day_shift.length) || 0;
-        $('#day_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
-        $('#night_min').html(Math.min(...night_shift));
-        $('#night_max').html(Math.max(...night_shift));
-        var sum = night_shift.reduce((a, b) => a + b, 0);
-        var avg = (sum / night_shift.length) || 0;
-        $('#night_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
-        var all_shift = [];
-        for(var i = 0;i < day_shift.length;i++){
-          all_shift.push(day_shift[i] + night_shift[i]);
-        }
-        $('#all_min').html(Math.min(...all_shift));
-        $('#all_max').html(Math.max(...all_shift));
-        var sum = all_shift.reduce((a, b) => a + b, 0);
-        var avg = (sum / all_shift.length) || 0;
-        $('#all_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
+      function postload(){
+        var currentdate = new Date();
+        var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+        $('#fetch_time').html("FETCH DATA AT ― " + datetime);
+        $('#loading_spinner').prop("hidden", true);
+        $('#loading_space').prop("hidden", true);
+        $('#canvas_1').prop("hidden", false);
       }
 
       function update_data(){
@@ -442,11 +251,12 @@
         });
       }
 
+      //-- TRIGGER
       $('#year').on("keypress keyup keydown",function() {
         var year = $('#year').val();
         if(year.length == 4){
           if($('#auto_execute').is(":checked")){
-            set_graph_data();
+            set_graph();
           }
           $('#year').removeClass("is-invalid");
           $('#year').addClass("is-valid");
@@ -456,142 +266,55 @@
         }
       });
 
-      $('#month').change(function() {
-        if($('#auto_execute').is(":checked")){
-          set_graph_data();
-        }
-      });
+      $("#year").on("keypress keyup blur",function (event) {
+          $(this).val($(this).val().replace(/[^\d].+/, ""));
+           if ((event.which < 48 || event.which > 57)) {
+               event.preventDefault();
+           }
+       });
 
-      $('#work_center_group_id').change(function() {
-        toggleMachineNoGroup();
-        set_machine_list(function(machine_list){
-          $('#machine_no').empty();
-          var opt = document.createElement('option');
-          opt.appendChild(document.createTextNode("All Machine (" + machine_list.length + ")"));
-          opt.value = "All Machine";
-          machine_no.appendChild(opt);
-          for(var i = 0;i < machine_list.length;i++){
-            opt = document.createElement('option');
-            opt.appendChild( document.createTextNode(machine_list[i][0] + " | " + machine_list[i][1]));
-            opt.value = machine_list[i][0];
-            machine_no.appendChild(opt);
-          }
-          $('#machine_count').val(machine_list.length);
-          if($('#auto_execute').is(":checked")){
-            set_graph_data();
-          }
-        });
-      });
-
-      function set_machine_list(callback){
-        var work_center_group_id = $('#work_center_group_id').val();
-        $.ajax({
-          url: '/get_machine_list/',
-          data: {
-            'work_center_group_id' : work_center_group_id,
-          },
-          dataType: 'json',
-          success: function (data) {
-            callback(data.machine_list);
-          }
-        });
-      }
-
-      $('#machine_no').change(function() {
-        if($('#auto_execute').is(":checked")){
-          set_graph_data();
-        }
-      });
-
-      $('#data_error').change(function() {
-        if($('#auto_execute').is(":checked")){
-          set_graph_data();
-        }
-      });
-
-      $('#auto_execute').change(function() {
-        if($('#auto_execute').is(":checked")){
-          set_graph_data();
-        }
-      });
-
-      function toggleMonthGroup(){
-        var type = $('#type').val();
-        if(type == "M") {
-          $('#month_group').prop('hidden', false);
-        } else {
-          $('#month_group').prop('hidden', true);
-        }
-      }
-
-      function toggleMachineNoGroup(){
-        var work_center_group_id = $('#work_center_group_id').val();
-        if(work_center_group_id != "All Work Center Group") {
-          $('#machine_no_group').prop('hidden', false);
-        } else {
-          $('#machine_no_group').prop('hidden', true);
-        }
-        $('#machine_no').val('All Machine');
-      }
-
-      $('#auto_execute').change(function() {
-        if(this.checked) $('#execute').prop("disabled", true);
-        else $('#execute').prop("disabled", false);
-      });
-
-      // OTHER FUNCTION
-       function get_date_count(){
-         var year = $('#year').val();
-         var month = $('#month').val();
-         if(month == "FEB" && (parseInt(year)%4) == 0) return 29;
-         else if(month == "FEB") return 28;
-         else if(month == "JAN" || month == "MAR" || month == "MAY" || month == "JUL" || month == "AUG" || month == "OCT" || month == "DEC") return 31;
-         return 30;
-       }
-
-       function get_date_labels(){
-         var result = [];
-         for(i = 1;i < x_count + 1;i++){
-           result.push(i);
+       $('#month').change(function() {
+         if($('#auto_execute').is(":checked")){
+           set_graph();
          }
-         return result;
+       });
+
+       $('#wcg_id').change(function() {
+         set_machine_list(function(machine_list){
+           $('#mc_no').empty();
+           for(var i = 0;i < machine_list.length;i++){
+             var opt = document.createElement('option');
+             opt.appendChild( document.createTextNode(machine_list[i][0] + " | " + machine_list[i][1]));
+             opt.value = machine_list[i][0];
+             mc_no.appendChild(opt);
+           }
+           $('#machine_count').val(machine_list.length);
+           if($('#auto_execute').is(":checked")){
+             set_graph();
+           }
+         });
+       });
+
+       function set_machine_list(callback){
+         var wcg_id = $('#wcg_id').val();
+         $.ajax({
+           url: '/get_machine_list/',
+           data: {
+             'wcg_id' : wcg_id,
+           },
+           dataType: 'json',
+           success: function (data) {
+             callback(data.machine_list);
+           }
+         });
        }
 
-       function get_wcg_name(id){
-         var result = "None";
-         result = $("#work_center_group_id option[value='" + id + "']").text();
-         return result;
-       }
+       $('#mc_no').change(function() {
+         if($('#auto_execute').is(":checked")){
+           set_graph();
+         }
+       });
 
-       function preload(){
-         $('#fetch_time').html("FETCHING DATA ...");
-         $('#loading_spinner').prop("hidden", false)
-         $('#loading_space').prop("hidden", false)
-         $('#canvas_1').prop("hidden", true)
-       }
-
-       function postload(datetime){
-         $('#fetch_time').html("FETCH DATA AT ― " + datetime);
-         $('#loading_spinner').prop("hidden", true);
-         $('#loading_space').prop("hidden", true);
-         $('#canvas_1').prop("hidden", false);
-       }
-
-       $("#year").on("keypress keyup blur",function (event) {
-           $(this).val($(this).val().replace(/[^\d].+/, ""));
-            if ((event.which < 48 || event.which > 57)) {
-                event.preventDefault();
-            }
-        });
-
-       function numberWithCommas(x) {
-          return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-       }
-
-       function addZero(x){
-         if(x < 10) return "0" + x
-         return x;
-       }
     </script>
   </body>
 </html>

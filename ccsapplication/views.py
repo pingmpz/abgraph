@@ -11,16 +11,10 @@ from dateutil.relativedelta import relativedelta
 import time
 import sys
 
-def get_connection():
-    conn = pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;''UID=CCSGROUPS\sqladmin;''PWD=$ql@2019;''Trusted_Connection=yes;')
-                        # 'UID=CCSGROUPS\sqladmin;'
-                        # 'PWD=$ql@2019;'
-                        # 'Trusted_Connection=yes;'
-    return conn
-
 def index(request):
     workcentergroup_list = WorkCenterGroup.objects.all()
-    machine_list = Machine.objects.all()
+    wcg = WorkCenterGroup.objects.get(name='BTA')
+    machine_list = Machine.objects.filter(wcg=wcg)
     context = {
         'workcentergroup_list' : workcentergroup_list,
         'machine_list' : machine_list,
@@ -29,7 +23,10 @@ def index(request):
 
 def index0(request):
     workcentergroup_list = WorkCenterGroup.objects.all()
-    machine_list = Machine.objects.all()
+    wcgs = WorkCenterGroup.objects.all().order_by('name')
+    first_wcg_name = wcgs[0].name
+    wcg = WorkCenterGroup.objects.get(name=first_wcg_name)
+    machine_list = Machine.objects.filter(wcg=wcg)
     context = {
         'workcentergroup_list' : workcentergroup_list,
         'machine_list' : machine_list,
@@ -112,22 +109,103 @@ def get_data(request):
     }
     return JsonResponse(data)
 
+def get_data0(request):
+    #-- REQUEST DATA
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    mc_no = request.GET.get('mc_no')
+    #-- Prepare Data
+    result = []
+    mc = Machine.objects.get(no=mc_no)
+    trans = Transaction.objects.filter(mc=mc,start_datetime__year=year,start_datetime__month=get_month_no(month))
+    day_count = get_month_day_count(year, month)
+    for i in range(day_count):
+        day = str(i + 1)
+        name = ""
+        color = "opacity: 0"
+        start_hrs = 0
+        start_min = 0
+        end_hrs = 0
+        end_min = 0
+        result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+    for tran in trans:
+        if float(tran.operate_time) > 720:
+            print("Error :", tran.id, tran.start_datetime, tran.stop_datetime, tran.operate_time)
+            day = str(tran.start_datetime.day)
+            name = "✖"
+            color = "red"
+            start_hrs = tran.start_datetime.hour
+            start_min = tran.start_datetime.minute
+            end_hrs = tran.start_datetime.hour
+            end_min = tran.start_datetime.minute + 20
+            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+        elif tran.start_datetime.day != tran.stop_datetime.day:
+            day = str(tran.start_datetime.day)
+            name = "►"
+            color = "rgb(130,177,254)"
+            start_hrs = tran.start_datetime.hour
+            start_min = tran.start_datetime.minute
+            end_hrs = 24
+            end_min = 0
+            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+            day = str(tran.stop_datetime.day)
+            name = "◄"
+            color = "rgb(130,177,254)"
+            start_hrs = 0
+            start_min = 0
+            end_hrs = tran.stop_datetime.hour
+            end_min = tran.stop_datetime.minute
+            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+        else:
+            day = str(tran.start_datetime.day)
+            name = "►"
+            if tran.start_datetime.hour == tran.stop_datetime.hour:
+                name = ""
+            color = "rgb(130,177,254)"
+            start_hrs = tran.start_datetime.hour
+            start_min = tran.start_datetime.minute
+            end_hrs = tran.stop_datetime.hour
+            end_min = tran.stop_datetime.minute
+            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+    data = {
+        'result' : result,
+    }
+    return JsonResponse(data)
+
 def get_machine_list(request):
     #-- REQUEST DATA FORM FRONT
-    work_center_group_id = request.GET.get('work_center_group_id')
+    wcg_id = request.GET.get('wcg_id')
     #-- FETCH DATA FROM DATABASE
     machine_list = []
     mc_list = []
-    if work_center_group_id == 'All Work Center Group':
+    if wcg_id == '-1':
         mc_list = Machine.objects.all()
     else:
-        mc_list = Machine.objects.filter(wcg=work_center_group_id)
+        mc_list = Machine.objects.filter(wcg=wcg_id)
     for mc in mc_list:
         machine_list.append([mc.no,mc.name])
     data = {
         'machine_list' : machine_list,
     }
     return JsonResponse(data)
+
+def get_exp_hrs(request):
+    #-- REQUEST DATA FORM FRONT
+    machine_no = request.GET.get('machine_no')
+    #-- FETCH DATA FROM DATABASE
+    machine = Machine.objects.get(no=machine_no)
+    data = {
+        'exp_hrs' : machine.exp_hrs,
+    }
+    return JsonResponse(data)
+
+#--------------------------------------------------------------------------------------------------------------------- Update Data
+def get_connection():
+    conn = pyodbc.connect('Driver={SQL Server};''Server=SVSP-SQL;''Database=CCS_Production;''UID=CCSGROUPS\sqladmin;''PWD=$ql@2019;''Trusted_Connection=yes;')
+                        # 'UID=CCSGROUPS\sqladmin;'
+                        # 'PWD=$ql@2019;'
+                        # 'Trusted_Connection=yes;'
+    return conn
 
 def update_data(request):
     UpdateWorkCenterGroup().start()
@@ -137,23 +215,6 @@ def update_data(request):
     }
     return JsonResponse(data)
 
-#--------------------------------------------------------------------------------------------------------------------- ETC Function
-def get_month_no(month):
-    month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
-    return str(month_set.index(month) + 1)
-
-def time_year(type, year, month):
-    if type == "M":
-        return 1
-    elif month == "FEB" and int(year)%4 == 0:
-        return 29
-    elif month == "FEB" :
-        return 28
-    elif month == "JAN" or month == "MAR" or month == "MAY" or month == "JUL" or month == "AUG" or month == "OCT" or month == "DEC":
-        return 31
-    return 30
-
-#--------------------------------------------------------------------------------------------------------------------- Threading
 class UpdateWorkCenterGroup(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -175,6 +236,7 @@ class UpdateWorkCenterGroup(threading.Thread):
         print("--- UPDATE WORK CENTER GROUP COMPLETED")
         print("--- ALL RECORD : " + str(all_item))
         print("--- NEW RECORD  : " + str(new_item))
+        print("--- --- ---")
 
 class UpdateMachine(threading.Thread):
     def __init__(self):
@@ -200,6 +262,7 @@ class UpdateMachine(threading.Thread):
         print("--- UPDATE MACHINE COMPLETED")
         print("--- ALL RECORD : " + str(all_item))
         print("--- NEW RECORD  : " + str(new_item))
+        print("--- --- ---")
 
 class UpdateTransaction(threading.Thread):
     def __init__(self):
@@ -235,7 +298,22 @@ class UpdateTransaction(threading.Thread):
         print("--- START QUERY DATE : " + start_query_date.strftime("%Y-%m-%d"))
         print("--- ALL RECORD : " + str(all_item))
         print("--- NEW RECORD  : " + str(new_item))
+        print("--- --- ---")
 
 def last_transaction():
     tran = Transaction.objects.last()
     return tran
+
+#--------------------------------------------------------------------------------------------------------------------- ETC Function
+def get_month_no(month):
+    month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+    return str(month_set.index(month) + 1)
+
+def get_month_day_count(year, month):
+    if month == "FEB" and int(year)%4 == 0:
+        return 29
+    elif month == "FEB" :
+        return 28
+    elif month == "JAN" or month == "MAR" or month == "MAY" or month == "JUL" or month == "AUG" or month == "OCT" or month == "DEC":
+        return 31
+    return 30
