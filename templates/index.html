@@ -30,11 +30,15 @@
               <div class="row">
                 <div class="col-3">
                   <div class="row">
-                    <div class="col-12">
-                      <div class="card" id="card_filter">
+                    <div class="col-12" id="filter">
+                      <div class="card">
                         <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions">
-                            <button type="button" class="btn btn-link" id="update_data" name="update_data" onclick="update_data()">Update Data</button>
+                            <a class="c-subheader-nav-link" href="#" onclick="update_data()" id="update_data_btn">
+                              <svg class="c-icon">
+                              <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-sync"></use>
+                            </svg>
+                            </a>
                           </div>
                         </div>
                         <div class="card-body">
@@ -116,10 +120,23 @@
                   </div>
                 </div>
                 <!-- Machine Running Time -->
-                <div class="col-9">
+                <div class="col-9" id="graph">
                   <div class="card">
-                    <div class="card-header"><strong>Machine Running Time</strong>
-                      <div class="card-header-actions"><small id="fetch_time">FETCH DATA AT ― NONE</small></div>
+                    <div class="card-header">
+                      <a class="c-subheader-nav-link" href="#" onclick="hide_filter()" id="hide_filter_btn">
+                        <svg class="c-icon">
+                        <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-caret-left"></use>
+                      </svg>
+                      </a>
+                      <a class="c-subheader-nav-link" href="#" onclick="show_filter()" id="show_filter_btn" hidden>
+                        <svg class="c-icon">
+                        <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-caret-right"></use>
+                      </svg>
+                      </a>
+                      <strong>Machine Running Time</strong>
+                      <div class="card-header-actions">
+                        <small id="fetch_time">FETCH DATA AT ― NONE</small>
+                      </div>
                     </div>
                     <div class="card-body">
                       <div class="c-chart-wrapper">
@@ -450,6 +467,20 @@
             location.reload();
           }
         });
+      }
+
+      function hide_filter(){
+        $('#filter').prop("hidden", true);
+        $('#hide_filter_btn').prop("hidden", true);
+        $('#show_filter_btn').prop("hidden", false);
+        $('#graph').removeClass("col-9").addClass("col-12");
+      }
+
+      function show_filter(){
+        $('#filter').prop("hidden", false);
+        $('#hide_filter_btn').prop("hidden", false);
+        $('#show_filter_btn').prop("hidden", true);
+        $('#graph').removeClass("col-12").addClass("col-9");
       }
 
       $('#year').on("keypress keyup keydown",function() {
