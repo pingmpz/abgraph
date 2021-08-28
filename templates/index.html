@@ -28,7 +28,7 @@
           <div class="container-fluid">
             <div class="fade-in">
               <div class="row">
-                <div class="col-4">
+                <div class="col-3">
                   <div class="row">
                     <div class="col-12">
                       <div class="card" id="card_filter">
@@ -40,24 +40,15 @@
                         <div class="card-body">
                           <div class="form-horizontal">
                             <div class="form-group row">
-                              <label class="col-md-4 col-form-label">Graph Type</label>
+                              <label class="col-md-4 col-form-label"><small>Year</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="type" name="type">
-                                  <option value="M">Month</option>
-                                  <option value="Y">Year</option>
-                                </select>
-                              </div>
-                            </div>
-                            <div class="form-group row">
-                              <label class="col-md-4 col-form-label">Year</label>
-                              <div class="col-md-8">
-                                <input class="form-control" type="text" id="year" name="year" placeholder="Example : 2021" maxlength="4" value="2021">
+                                <input class="form-control form-control-sm" type="text" id="year" name="year" placeholder="Example : 2021" maxlength="4" value="2021">
                               </div>
                             </div>
                             <div class="form-group row" id="month_group">
-                              <label class="col-md-4 col-form-label">Month</label>
+                              <label class="col-md-4 col-form-label"><small>Month</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="month" name="month">
+                                <select class="form-control form-control-sm" id="month" name="month">
                                   <option value="JAN">January</option>
                                   <option value="FEB">February</option>
                                   <option value="MAR">March</option>
@@ -74,10 +65,10 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-4 col-form-label">Work Center Group</label>
+                              <label class="col-md-4 col-form-label"><small>Work Center Group</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="wcg_id" name="wcg_id">
-                                  <option value="All Work Center Group">All Work Center Group</option>
+                                <select class="form-control form-control-sm" id="wcg_id" name="wcg_id">
+                                  <!-- <option value="All Work Center Group">All Work Center Group</option> -->
                                   {% for workcentergroup in workcentergroup_list %}
                                   <option value="{{ workcentergroup.id }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ workcentergroup.name }}</option>
                                   {% endfor %}
@@ -86,9 +77,9 @@
                               </div>
                             </div>
                             <div class="form-group row" id="mc_no_group">
-                              <label class="col-md-4 col-form-label">Machine No</label>
+                              <label class="col-md-4 col-form-label"><small>Machine No</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="mc_no" name="mc_no">
+                                <select class="form-control form-control-sm" id="mc_no" name="mc_no">
                                   <option value="-1">All Machine ({{machine_list|length}})</option>
                                   {% for machine in machine_list %}
                                   <option value="{{ machine.no }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ machine.no }} | {{ machine.name }}</option>
@@ -98,68 +89,34 @@
                               </div>
                             </div>
                             <div class="form-group row">
+                              <label class="col-md-4 col-form-label"><small>Expect Hours</small></label>
+                              <div class="col-md-8">
+                                <input class="form-control form-control-sm" type="text" id="exp_hrs" name="exp_hrs" disabled>
+                              </div>
+                            </div>
+                            <div class="form-group row">
                               <label class="col-md-9">
                                 <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="data_error" name="data_error" checked>
-                                  <label class="form-check-label" for="data_error">Fixed Error Data <small>― work only on a month graph</small></label>
+                                  <label class="form-check-label" for="data_error"><small>Fixed Error Data</small></label>
                                 </div>
                                 <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
-                                  <label class="form-check-label" for="auto_execute">Auto Execute</label>
+                                  <label class="form-check-label" for="auto_execute"><small>Auto Execute</small></label>
                                 </div>
                               </label>
                               <label class="col-md-3 text-right">
-                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph()" disabled>Execute</button>
+                                <button type="button" class="btn btn-sm btn-primary" id="execute" name="execute" onclick="set_graph()" disabled>Execute</button>
                               </label>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <!-- Statistic -->
-                    <div class="col-12">
-                      <div class="card">
-                        <div class="card-header"><strong>Statistic</strong>
-                          <div class="card-header-actions"></div>
-                        </div>
-                        <div class="card-body">
-                          <table class="table table-bordered text-center">
-                            <thead class="bg-danger">
-                              <tr>
-                                <th>SHIFT</th>
-                                <th>MIN</th>
-                                <th>MAX</th>
-                                <th>AVERAGE</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <th>DAY</th>
-                                <td id="day_min">0</td>
-                                <td id="day_max">0</td>
-                                <td id="day_avg">0</td>
-                              </tr>
-                              <tr>
-                                <th>NIGHT</th>
-                                <td id="night_min">0</td>
-                                <td id="night_max">0</td>
-                                <td id="night_avg">0</td>
-                              </tr>
-                              <tr>
-                                <th>ALL</th>
-                                <td id="all_min">0</td>
-                                <td id="all_max">0</td>
-                                <td id="all_avg">0</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <!-- Machine Running Time -->
-                <div class="col-8">
+                <div class="col-9">
                   <div class="card">
                     <div class="card-header"><strong>Machine Running Time</strong>
                       <div class="card-header-actions"><small id="fetch_time">FETCH DATA AT ― NONE</small></div>
@@ -237,8 +194,7 @@
       var day_bar_border_color = [];
       var night_bar_color = ['rgb(130,177,254)'];
       var night_bar_border_color = [];
-      var line_1_color = ['rgb(255,255,255,0)'];
-      var line_2_color = ['rgb(255,255,255,0)'];
+      var line_color = ['rgb(255,255,255,0)'];
       var footer = (tooltipItems) => {
           let sum = i = 0;
           let data = [0, 0];
@@ -280,7 +236,15 @@
                     mode: 'horizontal',
                     yMin: 0,
                     yMax: 0,
-                    borderColor: line_1_color,
+                    borderColor: 'rgb(0,0,0)',
+                    borderWidth: 1,
+                },{
+                    id: 'maxday',
+                    type: 'line',
+                    mode: 'horizontal',
+                    yMin: 1440,
+                    yMax: 1440,
+                    borderColor: 'rgb(0,0,0)',
                     borderWidth: 1,
                 }]
             },
@@ -289,13 +253,14 @@
           			let datasets = ctx.chart.data.datasets; // Tried `.filter(ds => !ds._meta.hidden);` without success
                 var type = $('#type').val();
                 var mc_no = $('#mc_no').val();
+                var exp_hrs = $('#exp_hrs').val();
             		if (ctx.datasetIndex === datasets.length - 1) {
             			let sum = 0;
             			datasets.map(dataset => {
             				sum += dataset.data[ctx.dataIndex];
             			});
-                  result = Math.floor((sum/1440)*100) + "%";
-                  if(Math.floor((sum/1440)*100) == 0) result = "";
+                  result = Math.floor((sum/(exp_hrs*60))*100) + "%";
+                  if(Math.floor((sum/(exp_hrs*60))*100) == 0) result = "";
                   if(mc_no == "-1") result = "";
             			return result;
             		}
@@ -332,24 +297,16 @@
       //-- MAIN FUNCTION
       function set_graph(){
         preload();
-        var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
         var wcg_id = $('#wcg_id').val();
         var wcg_id_count = $('#wcg_id_count').val();
         var mc_no = $('#mc_no').val();
         var machine_count = $('#machine_count').val();
-        if(type == "Y"){
-          sub_title = year;
-          x_count = 12;
-          labels = month_set;
-          x_title = 'Month';
-        } else if(type == "M"){
-          sub_title = full_month_set[month_set.indexOf(month)] + " " + year;
-          x_count = get_date_count();
-          labels = get_date_labels();
-          x_title = 'Date';
-        }
+        sub_title = full_month_set[month_set.indexOf(month)] + " " + year;
+        x_count = get_date_count();
+        labels = get_date_labels();
+        x_title = 'Date';
         if(wcg_id == "-1") title = "Machine : All Machine From All Work Center Group";
         else if(mc_no == "-1") title = "Machine : All Machine From " + get_wcg_name(wcg_id);
         else title = "Machine : " + mc_no;
@@ -384,23 +341,18 @@
               },
             ]
             };
-            var currentdate = new Date();
-            var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-            set_statistic();
-            set_line_color();
             barChart.data.labels = labels;
             barChart.data = data;
             barChart.options.plugins.subtitle.text = sub_title;
             barChart.options.plugins.title.text = title;
             barChart.options.scales.x.title.text = x_title;
             barChart.update();
-            postload(datetime);
+            postload();
           });
         });
       }
 
       function get_data(shift, callback){
-        var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
         var wcg_id = $('#wcg_id').val();
@@ -416,7 +368,6 @@
           data: {
             'shift' : shift,
             'x_count' : x_count,
-            'type': type,
             'year': year,
             'month': month,
             'wcg_id': wcg_id,
@@ -429,18 +380,26 @@
             var error_result = [];
             result = data.result;
             error_result = data.error_result;
+            set_line();
             callback(result, error_result);
           }
         });
       }
 
-      function set_line_color(){
-        var type = $('#type').val();
+      function set_line(){
         var mc_no = $('#mc_no').val();
         if(mc_no == "-1"){
           barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
+          barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(255,255,255,0)';
         } else {
-          barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
+          get_exp_hrs(function(exp_hrs){
+            $('#exp_hrs').val(exp_hrs);
+            barChart.options.plugins.annotation.annotations[0].yMin = exp_hrs * 60;
+            barChart.options.plugins.annotation.annotations[0].yMax = exp_hrs * 60;
+            barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
+            barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(0,0,0)';
+          });
+          barChart.update();
         }
       }
 
@@ -467,26 +426,18 @@
         }
       }
 
-      function set_statistic(){
-        $('#day_min').html(Math.min(...day_shift));
-        $('#day_max').html(Math.max(...day_shift));
-        var sum = day_shift.reduce((a, b) => a + b, 0);
-        var avg = (sum / day_shift.length) || 0;
-        $('#day_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
-        $('#night_min').html(Math.min(...night_shift));
-        $('#night_max').html(Math.max(...night_shift));
-        var sum = night_shift.reduce((a, b) => a + b, 0);
-        var avg = (sum / night_shift.length) || 0;
-        $('#night_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
-        var all_shift = [];
-        for(var i = 0;i < day_shift.length;i++){
-          all_shift.push(day_shift[i] + night_shift[i]);
-        }
-        $('#all_min').html(Math.min(...all_shift));
-        $('#all_max').html(Math.max(...all_shift));
-        var sum = all_shift.reduce((a, b) => a + b, 0);
-        var avg = (sum / all_shift.length) || 0;
-        $('#all_avg').html(Math.round((avg + Number.EPSILON) * 100) / 100);
+      function get_exp_hrs(callback){
+        var mc_no = $('#mc_no').val();
+        $.ajax({
+          url: '/get_exp_hrs/',
+          data: {
+            'mc_no' : mc_no,
+          },
+          dataType: 'json',
+          success: function (data) {
+            callback(data.exp_hrs)
+          }
+        });
       }
 
       function update_data(){
@@ -500,19 +451,6 @@
           }
         });
       }
-
-      $('#type').change(function() {
-        toggleMonthGroup();
-        if($('#type').val() == "Y"){
-          $('#data_error').prop("disabled", true);
-          $('#data_error').prop("checked", false);
-        } else {
-          $('#data_error').prop("disabled", false);
-        }
-        if($('#auto_execute').is(":checked")){
-          set_graph();
-        }
-      });
 
       $('#year').on("keypress keyup keydown",function() {
         var year = $('#year').val();
@@ -587,15 +525,6 @@
         }
       });
 
-      function toggleMonthGroup(){
-        var type = $('#type').val();
-        if(type == "M") {
-          $('#month_group').prop('hidden', false);
-        } else {
-          $('#month_group').prop('hidden', true);
-        }
-      }
-
       function toggleMachineNoGroup(){
         var wcg_id = $('#wcg_id').val();
         if(wcg_id != "-1") {
@@ -642,7 +571,9 @@
          $('#canvas_1').prop("hidden", true)
        }
 
-       function postload(datetime){
+       function postload(){
+         var currentdate = new Date();
+         var datetime = currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
          $('#fetch_time').html("FETCH DATA AT ― " + datetime);
          $('#loading_spinner').prop("hidden", true);
          $('#loading_space').prop("hidden", true);

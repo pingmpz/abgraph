@@ -37,7 +37,6 @@ def get_data(request):
     #-- REQUEST DATA FORM FRONT
     shift = request.GET.get('shift')
     x_count = int(request.GET.get('x_count'))
-    type = request.GET.get('type')
     year = request.GET.get('year')
     month = request.GET.get('month')
     wcg_id = request.GET.get('wcg_id')
@@ -46,10 +45,7 @@ def get_data(request):
     print("------------------------------------------")
     print("INCLUDE ERROR DATA : ", data_error)
     print("SHIFT : ", shift)
-    print("TYPE : ", type)
     print("YEAR : ", year)
-    if type == 'M':
-        print("MONTH : ", month, "(" + get_month_no(month) + ")")
     print("WCG ID : ", wcg_id)
     if wcg_id != "-1":
         print("MACHINE NO : ", mc_no)
@@ -60,11 +56,8 @@ def get_data(request):
     t0 = time.time()
     for i in range(x_count):
         trans = Transaction.objects.filter(start_datetime__year=year).order_by('mc') #CHECK YEAR
-        if type == 'Y':
-            trans = trans.filter(start_datetime__month=(i+1)) #CHECK MONTH
-        elif type == 'M':
-            trans = trans.filter(start_datetime__month=get_month_no(month)) #CHECK MONTH
-            trans = trans.filter(start_datetime__day=(i+1)) #CHECK DATE
+        trans = trans.filter(start_datetime__month=get_month_no(month)) #CHECK MONTH
+        trans = trans.filter(start_datetime__day=(i+1)) #CHECK DATE
         if shift == 'DAY':
             trans = trans.filter(start_datetime__hour__gte=7)
             trans = trans.filter(start_datetime__hour__lt=19)
