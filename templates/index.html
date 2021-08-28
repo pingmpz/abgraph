@@ -76,20 +76,20 @@
                             <div class="form-group row">
                               <label class="col-md-4 col-form-label">Work Center Group</label>
                               <div class="col-md-8">
-                                <select class="form-control" id="work_center_group_id" name="work_center_group_id">
+                                <select class="form-control" id="wcg_id" name="wcg_id">
                                   <option value="All Work Center Group">All Work Center Group</option>
                                   {% for workcentergroup in workcentergroup_list %}
                                   <option value="{{ workcentergroup.id }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ workcentergroup.name }}</option>
                                   {% endfor %}
                                 </select>
-                                <input class="form-control" type="text" id="work_center_group_id_count" name="work_center_group_id_count" value="{{workcentergroup_list|length}}" hidden>
+                                <input class="form-control" type="text" id="wcg_id_count" name="wcg_id_count" value="{{workcentergroup_list|length}}" hidden>
                               </div>
                             </div>
-                            <div class="form-group row" id="machine_no_group">
+                            <div class="form-group row" id="mc_no_group">
                               <label class="col-md-4 col-form-label">Machine No</label>
                               <div class="col-md-8">
-                                <select class="form-control" id="machine_no" name="machine_no">
-                                  <option value="All Machine">All Machine ({{machine_list|length}})</option>
+                                <select class="form-control" id="mc_no" name="mc_no">
+                                  <option value="-1">All Machine ({{machine_list|length}})</option>
                                   {% for machine in machine_list %}
                                   <option value="{{ machine.no }}" {% if forloop.counter0 == 0 %}selected{% endif %}>{{ machine.no }} | {{ machine.name }}</option>
                                   {% endfor %}
@@ -109,7 +109,7 @@
                                 </div>
                               </label>
                               <label class="col-md-3 text-right">
-                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph_data()" disabled>Execute</button>
+                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph()" disabled>Execute</button>
                               </label>
                             </div>
                           </div>
@@ -217,7 +217,7 @@
           var currentdate = new Date();
           $("#year").val(currentdate.getFullYear());
           $("#month").val(month_set[currentdate.getMonth()]);
-          set_graph_data();
+          set_graph();
       });
 
       //-- DATA
@@ -288,7 +288,7 @@
           		formatter: (value, ctx) => {
           			let datasets = ctx.chart.data.datasets; // Tried `.filter(ds => !ds._meta.hidden);` without success
                 var type = $('#type').val();
-                var machine_no = $('#machine_no').val();
+                var mc_no = $('#mc_no').val();
             		if (ctx.datasetIndex === datasets.length - 1) {
             			let sum = 0;
             			datasets.map(dataset => {
@@ -296,7 +296,7 @@
             			});
                   result = Math.floor((sum/1440)*100) + "%";
                   if(Math.floor((sum/1440)*100) == 0) result = "";
-                  if(machine_no == "All Machine" || type == "Y") result = "";
+                  if(mc_no == "-1") result = "";
             			return result;
             		}
             		else {
@@ -330,14 +330,14 @@
       var barChart = new Chart(document.getElementById('canvas_1'), config);
 
       //-- MAIN FUNCTION
-      function set_graph_data(){
+      function set_graph(){
         preload();
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
-        var work_center_group_id = $('#work_center_group_id').val();
-        var work_center_group_id_count = $('#work_center_group_id_count').val();
-        var machine_no = $('#machine_no').val();
+        var wcg_id = $('#wcg_id').val();
+        var wcg_id_count = $('#wcg_id_count').val();
+        var mc_no = $('#mc_no').val();
         var machine_count = $('#machine_count').val();
         if(type == "Y"){
           sub_title = year;
@@ -350,9 +350,9 @@
           labels = get_date_labels();
           x_title = 'Date';
         }
-        if(work_center_group_id == "All Work Center Group") title = "Machine : All Machine From All Work Center Group";
-        else if(machine_no == "All Machine") title = "Machine : All Machine From " + get_wcg_name(work_center_group_id);
-        else title = "Machine : " + machine_no;
+        if(wcg_id == "-1") title = "Machine : All Machine From All Work Center Group";
+        else if(mc_no == "-1") title = "Machine : All Machine From " + get_wcg_name(wcg_id);
+        else title = "Machine : " + mc_no;
         set_data();
       }
 
@@ -403,9 +403,9 @@
         var type = $('#type').val();
         var year = $('#year').val();
         var month = $('#month').val();
-        var work_center_group_id = $('#work_center_group_id').val();
-        var work_center_group_id_count = $('#work_center_group_id_count').val();
-        var machine_no = $('#machine_no').val();
+        var wcg_id = $('#wcg_id').val();
+        var wcg_id_count = $('#wcg_id_count').val();
+        var mc_no = $('#mc_no').val();
         var machine_count = $('#machine_count').val();
         var data_error = 'TRUE';
         if($('#data_error').is(":checked")){
@@ -419,8 +419,8 @@
             'type': type,
             'year': year,
             'month': month,
-            'work_center_group_id': work_center_group_id,
-            'machine_no': machine_no,
+            'wcg_id': wcg_id,
+            'mc_no': mc_no,
             'data_error' : data_error,
           },
           dataType: 'json',
@@ -436,8 +436,8 @@
 
       function set_line_color(){
         var type = $('#type').val();
-        var machine_no = $('#machine_no').val();
-        if(machine_no == "All Machine" || type == "Y"){
+        var mc_no = $('#mc_no').val();
+        if(mc_no == "-1"){
           barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
         } else {
           barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
@@ -510,7 +510,7 @@
           $('#data_error').prop("disabled", false);
         }
         if($('#auto_execute').is(":checked")){
-          set_graph_data();
+          set_graph();
         }
       });
 
@@ -518,7 +518,7 @@
         var year = $('#year').val();
         if(year.length == 4){
           if($('#auto_execute').is(":checked")){
-            set_graph_data();
+            set_graph();
           }
           $('#year').removeClass("is-invalid");
           $('#year').addClass("is-valid");
@@ -530,37 +530,37 @@
 
       $('#month').change(function() {
         if($('#auto_execute').is(":checked")){
-          set_graph_data();
+          set_graph();
         }
       });
 
-      $('#work_center_group_id').change(function() {
+      $('#wcg_id').change(function() {
         toggleMachineNoGroup();
         set_machine_list(function(machine_list){
-          $('#machine_no').empty();
+          $('#mc_no').empty();
           var opt = document.createElement('option');
           opt.appendChild(document.createTextNode("All Machine (" + machine_list.length + ")"));
-          opt.value = "All Machine";
-          machine_no.appendChild(opt);
+          opt.value = "-1";
+          mc_no.appendChild(opt);
           for(var i = 0;i < machine_list.length;i++){
             opt = document.createElement('option');
             opt.appendChild( document.createTextNode(machine_list[i][0] + " | " + machine_list[i][1]));
             opt.value = machine_list[i][0];
-            machine_no.appendChild(opt);
+            mc_no.appendChild(opt);
           }
           $('#machine_count').val(machine_list.length);
           if($('#auto_execute').is(":checked")){
-            set_graph_data();
+            set_graph();
           }
         });
       });
 
       function set_machine_list(callback){
-        var work_center_group_id = $('#work_center_group_id').val();
+        var wcg_id = $('#wcg_id').val();
         $.ajax({
           url: '/get_machine_list/',
           data: {
-            'work_center_group_id' : work_center_group_id,
+            'wcg_id' : wcg_id,
           },
           dataType: 'json',
           success: function (data) {
@@ -569,21 +569,21 @@
         });
       }
 
-      $('#machine_no').change(function() {
+      $('#mc_no').change(function() {
         if($('#auto_execute').is(":checked")){
-          set_graph_data();
+          set_graph();
         }
       });
 
       $('#data_error').change(function() {
         if($('#auto_execute').is(":checked")){
-          set_graph_data();
+          set_graph();
         }
       });
 
       $('#auto_execute').change(function() {
         if($('#auto_execute').is(":checked")){
-          set_graph_data();
+          set_graph();
         }
       });
 
@@ -597,13 +597,13 @@
       }
 
       function toggleMachineNoGroup(){
-        var work_center_group_id = $('#work_center_group_id').val();
-        if(work_center_group_id != "All Work Center Group") {
-          $('#machine_no_group').prop('hidden', false);
+        var wcg_id = $('#wcg_id').val();
+        if(wcg_id != "-1") {
+          $('#mc_no_group').prop('hidden', false);
         } else {
-          $('#machine_no_group').prop('hidden', true);
+          $('#mc_no_group').prop('hidden', true);
         }
-        $('#machine_no').val('All Machine');
+        $('#mc_no').val('-1');
       }
 
       $('#auto_execute').change(function() {
@@ -631,7 +631,7 @@
 
        function get_wcg_name(id){
          var result = "None";
-         result = $("#work_center_group_id option[value='" + id + "']").text();
+         result = $("#wcg_id option[value='" + id + "']").text();
          return result;
        }
 

@@ -40,8 +40,8 @@ def get_data(request):
     type = request.GET.get('type')
     year = request.GET.get('year')
     month = request.GET.get('month')
-    work_center_group_id = request.GET.get('work_center_group_id')
-    machine_no = request.GET.get('machine_no')
+    wcg_id = request.GET.get('wcg_id')
+    mc_no = request.GET.get('mc_no')
     data_error = request.GET.get('data_error')
     print("------------------------------------------")
     print("INCLUDE ERROR DATA : ", data_error)
@@ -50,9 +50,9 @@ def get_data(request):
     print("YEAR : ", year)
     if type == 'M':
         print("MONTH : ", month, "(" + get_month_no(month) + ")")
-    print("WCG ID : ", work_center_group_id)
-    if work_center_group_id != "All Work Center Group":
-        print("MACHINE NO : ", machine_no)
+    print("WCG ID : ", wcg_id)
+    if wcg_id != "-1":
+        print("MACHINE NO : ", mc_no)
     print("------------------------------------------")
     #-- FETCH DATA FROM DATABASE
     result = []
@@ -70,11 +70,11 @@ def get_data(request):
             trans = trans.filter(start_datetime__hour__lt=19)
         elif shift == 'NIGHT':
             trans = trans.filter(start_datetime__hour__gte=19) | trans.filter(start_datetime__hour__lt=7)
-        if machine_no != 'All Machine':
-            mc = Machine.objects.get(no=machine_no)
+        if mc_no != '-1':
+            mc = Machine.objects.get(no=mc_no)
             trans = trans.filter(mc=mc)
-        elif work_center_group_id != "All Work Center Group":
-            wcg = WorkCenterGroup.objects.get(id=work_center_group_id)
+        elif wcg_id != "-1":
+            wcg = WorkCenterGroup.objects.get(id=wcg_id)
             mcs = Machine.objects.filter(wcg=wcg)
             trans = trans.filter(mc__in=mcs)
         err = False
@@ -110,10 +110,13 @@ def get_data(request):
     return JsonResponse(data)
 
 def get_data0(request):
+    color = "rgb(130,177,254)"
     #-- REQUEST DATA
     year = request.GET.get('year')
     month = request.GET.get('month')
     mc_no = request.GET.get('mc_no')
+    show_error = request.GET.get('show_error')
+    print(show_error)
     #-- Prepare Data
     result = []
     mc = Machine.objects.get(no=mc_no)
@@ -123,52 +126,64 @@ def get_data0(request):
         day = str(i + 1)
         name = ""
         color = "opacity: 0"
+        tooltip = ""
         start_hrs = 0
         start_min = 0
         end_hrs = 0
         end_min = 0
-        result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+        result.append([day,name,color,tooltip,start_hrs,start_min,end_hrs,end_min])
     for tran in trans:
+        temp_time = 0
+        #-- ERROR DATA
         if float(tran.operate_time) > 720:
+            if show_error == 'False':
+                continue
             print("Error :", tran.id, tran.start_datetime, tran.stop_datetime, tran.operate_time)
             day = str(tran.start_datetime.day)
-            name = "✖"
+            name = ""
             color = "red"
+            tooltip = ""
             start_hrs = tran.start_datetime.hour
             start_min = tran.start_datetime.minute
             end_hrs = tran.start_datetime.hour
-            end_min = tran.start_datetime.minute + 20
-            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+            end_min = tran.start_datetime.minute + 1
+            result.append([day,name,color,tooltip,start_hrs,start_min,end_hrs,end_min])
+        #-- DATA ACROSS DAY
         elif tran.start_datetime.day != tran.stop_datetime.day:
             day = str(tran.start_datetime.day)
-            name = "►"
-            color = "rgb(130,177,254)"
+            temp_time = ((24 - tran.start_datetime.hour) * 60) - tran.start_datetime.minute
+            print(temp_time)
+            name = str(round((float(temp_time)*100/1440),2)) + "%"
+            color = get_color(color)
+            tooltip = name + "‏‏‎ ‎"
             start_hrs = tran.start_datetime.hour
             start_min = tran.start_datetime.minute
             end_hrs = 24
             end_min = 0
-            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+            result.append([day,name,color,tooltip,start_hrs,start_min,end_hrs,end_min])
             day = str(tran.stop_datetime.day)
-            name = "◄"
-            color = "rgb(130,177,254)"
+            name = str(round(((float(tran.operate_time) - temp_time)*100/1440),2)) + "%"
+            color = get_color(color)
+            tooltip = name + "‏‏‎ ‎"
             start_hrs = 0
             start_min = 0
             end_hrs = tran.stop_datetime.hour
             end_min = tran.stop_datetime.minute
-            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+            result.append([day,name,color,tooltip,start_hrs,start_min,end_hrs,end_min])
+        #-- NORMAL DATA
         else:
             day = str(tran.start_datetime.day)
-            name = "►"
-            if tran.start_datetime.hour == tran.stop_datetime.hour:
-                name = ""
-            color = "rgb(130,177,254)"
+            name = str(round((float(tran.operate_time)*100/1440),2)) + "%"
+            color = get_color(color)
+            tooltip = name + "‏‏‎ ‎"
             start_hrs = tran.start_datetime.hour
             start_min = tran.start_datetime.minute
             end_hrs = tran.stop_datetime.hour
             end_min = tran.stop_datetime.minute
-            result.append([day,name,color,start_hrs,start_min,end_hrs,end_min])
+            result.append([day,name,color,tooltip,start_hrs,start_min,end_hrs,end_min])
     data = {
         'result' : result,
+        'exp_hrs' : mc.exp_hrs,
     }
     return JsonResponse(data)
 
@@ -191,9 +206,9 @@ def get_machine_list(request):
 
 def get_exp_hrs(request):
     #-- REQUEST DATA FORM FRONT
-    machine_no = request.GET.get('machine_no')
+    mc_no = request.GET.get('mc_no')
     #-- FETCH DATA FROM DATABASE
-    machine = Machine.objects.get(no=machine_no)
+    machine = Machine.objects.get(no=mc_no)
     data = {
         'exp_hrs' : machine.exp_hrs,
     }
@@ -305,6 +320,12 @@ def last_transaction():
     return tran
 
 #--------------------------------------------------------------------------------------------------------------------- ETC Function
+def get_color(color):
+    if color == "rgb(251,212,109)":
+        return "rgb(251,212,109)"
+        # return "rgb(240,165,0)"
+    return "rgb(251,212,109)"
+
 def get_month_no(month):
     month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
     return str(month_set.index(month) + 1)

@@ -44,15 +44,15 @@
                         <div class="card-body">
                           <div class="form-horizontal">
                             <div class="form-group row">
-                              <label class="col-md-4 col-form-label">Year</label>
+                              <label class="col-md-4 col-form-label"><small>Year</small></label>
                               <div class="col-md-8">
-                                <input class="form-control" type="text" id="year" name="year" placeholder="Example : 2021" maxlength="4" value="2021">
+                                <input class="form-control form-control-sm" type="text" id="year" name="year" placeholder="Example : 2021" maxlength="4" value="2021">
                               </div>
                             </div>
                             <div class="form-group row" id="month_group">
-                              <label class="col-md-4 col-form-label">Month</label>
+                              <label class="col-md-4 col-form-label"><small>Month</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="month" name="month">
+                                <select class="form-control form-control-sm" id="month" name="month">
                                   <option value="JAN">January</option>
                                   <option value="FEB">February</option>
                                   <option value="MAR">March</option>
@@ -71,7 +71,7 @@
                             <div class="form-group row">
                               <label class="col-md-4 col-form-label"><small>Work Center Group</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="wcg_id" name="wcg_id">
+                                <select class="form-control form-control-sm" id="wcg_id" name="wcg_id">
                                   {% for workcentergroup in workcentergroup_list %}
                                   <option value="{{ workcentergroup.id }}">{{ workcentergroup.name }}</option>
                                   {% endfor %}
@@ -80,9 +80,9 @@
                               </div>
                             </div>
                             <div class="form-group row" id="mc_no_group">
-                              <label class="col-md-4 col-form-label">Machine No</label>
+                              <label class="col-md-4 col-form-label"><small>Machine No</small></label>
                               <div class="col-md-8">
-                                <select class="form-control" id="mc_no" name="mc_no">
+                                <select class="form-control form-control-sm" id="mc_no" name="mc_no">
                                   {% for machine in machine_list %}
                                   <option value="{{ machine.no }}">{{ machine.no }} | {{ machine.name }}</option>
                                   {% endfor %}
@@ -91,15 +91,18 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <!-- <label class="col-md-9">
+                              <label class="col-md-4 col-form-label"><small>Expect Hours</small></label>
+                              <div class="col-md-8">
+                                <input class="form-control form-control-sm" type="text" id="exp_hrs" name="exp_hrs" disabled>
+                              </div>
+                            </div>
+                            <div class="form-group row">
+                              <label class="col-md-9">
                                 <div class="form-check checkbox">
-                                  <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
-                                  <label class="form-check-label" for="auto_execute">Auto Execute</label>
+                                  <input class="form-check-input" type="checkbox" id="show_error" name="show_error">
+                                  <label class="form-check-label" for="show_error"><small>Show Error</small></label>
                                 </div>
                               </label>
-                              <label class="col-md-3 text-right">
-                                <button type="button" class="btn btn-primary" id="execute" name="execute" onclick="set_graph()">Execute</button>
-                              </label> -->
                             </div>
                           </div>
                         </div>
@@ -179,25 +182,27 @@
           dataTable.addColumn({ type: 'string', id: 'Date' });
           dataTable.addColumn({ type: 'string', id: 'Name' });
           dataTable.addColumn({ type: 'string', role: 'style' });
+          dataTable.addColumn({type: 'string', role: 'tooltip'});
           dataTable.addColumn({ type: 'date', id: 'Start' });
           dataTable.addColumn({ type: 'date', id: 'End' });
-          dataTable.addRows([[ 'Day', '', 'opacity: 0', new Date(0,0,0,0,0,0),  new Date(0,0,0,24,0,0) ]]);
-          get_data(function(result) {
-            console.log(result)
-            for(var i = 0;i < result.length;i++){
-              day = result[i][0]
-              name = result[i][1]
-              color = result[i][2]
-              start_hrs = result[i][3]
-              start_min = result[i][4]
-              end_hrs = result[i][5]
-              end_min = result[i][6]
-              dataTable.addRows([[ day, name, color, new Date(0,0,0,start_hrs,start_min,0),  new Date(0,0,0,end_hrs,end_min,0) ]]);
+          dataTable.addRows([[ 'Day', '', 'opacity: 0', '', new Date(0,0,0,0,0,0),  new Date(0,0,0,23,59,0) ]]);
+          get_data(function(data) {
+            $('#exp_hrs').val(data.exp_hrs)
+            for(var i = 0;i < data.result.length;i++){
+              day = data.result[i][0]
+              name = data.result[i][1]
+              color = data.result[i][2]
+              tooltip = data.result[i][3]
+              start_hrs = data.result[i][4]
+              start_min = data.result[i][5]
+              end_hrs = data.result[i][6]
+              end_min = data.result[i][7]
+              dataTable.addRows([[ day, name, color, tooltip, new Date(0,0,0,start_hrs,start_min,0),  new Date(0,0,0,end_hrs,end_min,0) ]]);
             }
             var options = {
                 width: $(window).width() * 0.7,
-                height: $(window).height() * 0.9,
-                timeline: { rowLabelStyle: { fontSize: 12 }, barLabelStyle: { fontSize: 7 } },
+                height: $(window).height(),
+                timeline: { rowLabelStyle: { fontSize: 12 }, barLabelStyle: { fontSize: 8 } },
             };
             chart.draw(dataTable, options);
           });
@@ -209,16 +214,19 @@
         var year = $('#year').val();
         var month = $('#month').val();
         var mc_no = $('#mc_no').val();
+        var show_error = 'False';
+        if($('#show_error').is(":checked")) show_error = 'True';
         $.ajax({
           url: '/get_data0/',
           data: {
             'year' : year,
             'month' : month,
             'mc_no' : mc_no,
+            'show_error' : show_error,
           },
           dataType: 'json',
           success: function (data) {
-            callback(data.result);
+            callback(data);
           }
         });
       }
@@ -304,7 +312,11 @@
        }
 
        $('#mc_no').change(function() {
-           set_graph();
+          set_graph();
+       });
+
+       $('#show_error').change(function() {
+          set_graph();
        });
 
     </script>
