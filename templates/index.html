@@ -34,11 +34,11 @@
                       <div class="card">
                         <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions">
-                            <a class="c-subheader-nav-link" href="#" onclick="update_data()" id="update_data_btn">
+                            <!-- <a class="c-subheader-nav-link" href="#" onclick="update_data()" id="update_data_btn">
                               <svg class="c-icon">
-                              <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-sync"></use>
-                            </svg>
-                            </a>
+                                <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-sync"></use>
+                              </svg>
+                            </a> -->
                           </div>
                         </div>
                         <div class="card-body">
@@ -92,21 +92,34 @@
                                 <input class="form-control" type="text" id="machine_count" name="machine_count" value="{{machine_list|length}}" hidden>
                               </div>
                             </div>
-                            <div class="form-group row">
+                            <div class="form-group row" id="exp_hrs_group">
                               <label class="col-md-4 col-form-label"><small>Expect Hours</small></label>
                               <div class="col-md-8">
-                                <input class="form-control form-control-sm" type="text" id="exp_hrs" name="exp_hrs" disabled>
+                                <div class="input-group">
+                                  <input class="form-control form-control-sm" type="text" id="exp_hrs" name="exp_hrs" disabled>
+                                  <span class="input-group-append">
+                                    <button class="btn btn-sm btn-outline-link" type="button" id="btn_exp_hrs" name="btn_exp_hrs" data-toggle="modal" data-target="#edit_exp_hrs_modal" title="Edit">
+                                      <svg class="c-icon">
+                                        <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-pencil"></use>
+                                      </svg>
+                                    </button>
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             <div class="form-group row">
                               <label class="col-md-9">
                                 <div class="form-check checkbox">
-                                  <input class="form-check-input" type="checkbox" id="data_error" name="data_error" checked>
-                                  <label class="form-check-label" for="data_error"><small>Fixed Error Data</small></label>
+                                  <input class="form-check-input" type="checkbox" id="fx_error" name="fx_error" checked>
+                                  <label class="form-check-label" for="fx_error"><small>Fix Error Data</small></label>
                                 </div>
                                 <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="auto_execute" name="auto_execute" checked>
                                   <label class="form-check-label" for="auto_execute"><small>Auto Execute</small></label>
+                                </div>
+                                <div class="form-check checkbox">
+                                  <input class="form-check-input" type="checkbox" id="show_line" name="show_line" checked>
+                                  <label class="form-check-label" for="show_line"><small>Show Line</small></label>
                                 </div>
                               </label>
                               <label class="col-md-3 text-right">
@@ -131,7 +144,7 @@
                       <a class="c-subheader-nav-link" href="#" onclick="show_filter()" id="show_filter_btn" hidden>
                         <svg class="c-icon">
                         <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-caret-right"></use>
-                      </svg>
+                        </svg>
                       </a>
                       <strong>Machine Running Time</strong>
                       <div class="card-header-actions">
@@ -159,6 +172,32 @@
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Edit Expect Hours Modal -->
+          <div class="modal fade" id="edit_exp_hrs_modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-warning" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title">
+                    <svg class="c-icon c-icon-lg">
+                      <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-pencil"></use>
+                    </svg>
+                    Edit Expect Hours
+                  </h4>
+                  <button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label>New Expect Hours (1-24)</label><br>
+                    <input class="form-control" type="text" id="new_exp_hrs" name="new_exp_hrs" maxlength="2">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+                  <button class="btn btn-warning" type="button" onclick="edit_exp_hrs()">Save</button>
                 </div>
               </div>
             </div>
@@ -255,6 +294,11 @@
                     yMax: 0,
                     borderColor: 'rgb(0,0,0)',
                     borderWidth: 1,
+                    label: {
+                       enabled: true,
+                       position: "end",
+                       content: "Expect Hours : 0",
+                    }
                 },{
                     id: 'maxday',
                     type: 'line',
@@ -263,6 +307,11 @@
                     yMax: 1440,
                     borderColor: 'rgb(0,0,0)',
                     borderWidth: 1,
+                    label: {
+                       enabled: true,
+                       position: "end",
+                       content: "Maximum",
+                    }
                 }]
             },
             datalabels: {
@@ -271,14 +320,20 @@
                 var type = $('#type').val();
                 var mc_no = $('#mc_no').val();
                 var exp_hrs = $('#exp_hrs').val();
+                var machine_count = $('#machine_count').val();
             		if (ctx.datasetIndex === datasets.length - 1) {
             			let sum = 0;
             			datasets.map(dataset => {
             				sum += dataset.data[ctx.dataIndex];
             			});
-                  result = Math.floor((sum/(exp_hrs*60))*100) + "%";
+                  var result;
+                  if(mc_no != "-1"){
+                    result = Math.floor((sum/(exp_hrs*60))*100) + "%";
+                  } else {
+                    result = Math.floor((sum/(exp_hrs*machine_count*60))*100) + "%";
+                  }
                   if(Math.floor((sum/(exp_hrs*60))*100) == 0) result = "";
-                  if(mc_no == "-1") result = "";
+                  // if(mc_no == "-1") result = "";
             			return result;
             		}
             		else {
@@ -376,9 +431,9 @@
         var wcg_id_count = $('#wcg_id_count').val();
         var mc_no = $('#mc_no').val();
         var machine_count = $('#machine_count').val();
-        var data_error = 'TRUE';
-        if($('#data_error').is(":checked")){
-          data_error = 'FALSE';
+        var fx_error = 'TRUE';
+        if($('#fx_error').is(":checked")){
+          fx_error = 'FALSE';
         }
         $.ajax({
           url: '/get_data/',
@@ -389,7 +444,7 @@
             'month': month,
             'wcg_id': wcg_id,
             'mc_no': mc_no,
-            'data_error' : data_error,
+            'fx_error' : fx_error,
           },
           dataType: 'json',
           success: function (data) {
@@ -405,19 +460,35 @@
 
       function set_line(){
         var mc_no = $('#mc_no').val();
-        if(mc_no == "-1"){
-          barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
-          barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(255,255,255,0)';
-        } else {
-          get_exp_hrs(function(exp_hrs){
-            $('#exp_hrs').val(exp_hrs);
+        var machine_count = $('#machine_count').val();
+        get_exp_hrs(function(exp_hrs){
+          $('#exp_hrs').val(exp_hrs);
+          $("#new_exp_hrs").val(exp_hrs);
+          if(mc_no != "-1"){
             barChart.options.plugins.annotation.annotations[0].yMin = exp_hrs * 60;
             barChart.options.plugins.annotation.annotations[0].yMax = exp_hrs * 60;
+            barChart.options.plugins.annotation.annotations[0].label.content = "Expect Hours : " + exp_hrs;
             barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
             barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(0,0,0)';
-          });
-          barChart.update();
-        }
+            barChart.options.plugins.annotation.annotations[0].label.enabled = true;
+            barChart.options.plugins.annotation.annotations[1].label.enabled = true;
+          } else {
+            barChart.options.plugins.annotation.annotations[0].yMin = exp_hrs * machine_count * 60;
+            barChart.options.plugins.annotation.annotations[0].yMax = exp_hrs * machine_count * 60;
+            barChart.options.plugins.annotation.annotations[0].label.content = "Expect Hours : " + exp_hrs * machine_count;
+            barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(0,0,0)';
+            barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(255,255,255,0)';
+            barChart.options.plugins.annotation.annotations[0].label.enabled = true;
+            barChart.options.plugins.annotation.annotations[1].label.enabled = false;
+          }
+          if(!$('#show_line').is(":checked")){
+            barChart.options.plugins.annotation.annotations[0].borderColor = 'rgb(255,255,255,0)';
+            barChart.options.plugins.annotation.annotations[1].borderColor = 'rgb(255,255,255,0)';
+            barChart.options.plugins.annotation.annotations[0].label.enabled = false;
+            barChart.options.plugins.annotation.annotations[1].label.enabled = false;
+          }
+        });
+        barChart.update();
       }
 
       function set_bar_color(shift, error_result){
@@ -444,10 +515,12 @@
       }
 
       function get_exp_hrs(callback){
+        var wcg_id = $('#wcg_id').val();
         var mc_no = $('#mc_no').val();
         $.ajax({
           url: '/get_exp_hrs/',
           data: {
+            'wcg_id' : wcg_id,
             'mc_no' : mc_no,
           },
           dataType: 'json',
@@ -465,6 +538,25 @@
           dataType: 'json',
           success: function (data) {
             location.reload();
+          }
+        });
+      }
+
+      function edit_exp_hrs(){
+        var wcg_id = $('#wcg_id').val();
+        var mc_no = $('#mc_no').val();
+        var new_exp_hrs = $('#new_exp_hrs').val();
+        $.ajax({
+          url: '/edit_exp_hrs/',
+          data: {
+            'wcg_id' : wcg_id,
+            'mc_no' : mc_no,
+            'new_exp_hrs' : new_exp_hrs,
+          },
+          dataType: 'json',
+          success: function (data) {
+            $("#edit_exp_hrs_modal .close").click()
+            set_graph();
           }
         });
       }
@@ -544,13 +636,26 @@
         }
       });
 
-      $('#data_error').change(function() {
+      $("#new_exp_hrs").on("keypress keyup blur",function (event) {
+          $(this).val($(this).val().replace(/[^\d].+/, ""));
+           if ((event.which < 48 || event.which > 57)) {
+               event.preventDefault();
+           }
+       });
+
+      $('#fx_error').change(function() {
         if($('#auto_execute').is(":checked")){
           set_graph();
         }
       });
 
       $('#auto_execute').change(function() {
+        if($('#auto_execute').is(":checked")){
+          set_graph();
+        }
+      });
+
+      $('#show_line').change(function() {
         if($('#auto_execute').is(":checked")){
           set_graph();
         }

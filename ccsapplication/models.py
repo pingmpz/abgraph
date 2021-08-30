@@ -4,6 +4,7 @@ from datetime import datetime
 class WorkCenterGroup(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50, default="-")
+    exp_hrs = models.CharField(max_length=50, default="8") # Expect Hour
 
 class Machine(models.Model):
     no = models.CharField(max_length=50, primary_key=True)

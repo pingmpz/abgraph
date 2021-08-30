@@ -10,4 +10,5 @@ urlpatterns = [
     path('get_machine_list/', views.get_machine_list, name='get_machine_list'),
     path('get_exp_hrs/', views.get_exp_hrs, name='get_exp_hrs'),
     path('update_data/', views.update_data, name='update_data'),
+    path('edit_exp_hrs/', views.edit_exp_hrs, name='edit_exp_hrs'),
 ]

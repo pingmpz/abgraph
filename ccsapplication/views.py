@@ -41,9 +41,9 @@ def get_data(request):
     month = request.GET.get('month')
     wcg_id = request.GET.get('wcg_id')
     mc_no = request.GET.get('mc_no')
-    data_error = request.GET.get('data_error')
+    fx_error = request.GET.get('fx_error')
     print("------------------------------------------")
-    print("INCLUDE ERROR DATA : ", data_error)
+    print("INCLUDE ERROR DATA : ", fx_error)
     print("SHIFT : ", shift)
     print("YEAR : ", year)
     print("WCG ID : ", wcg_id)
@@ -79,13 +79,13 @@ def get_data(request):
             if(temp_mc_no == t.mc.no):
                 temp_time_same_mc += float(t.operate_time)
             else:
-                if data_error == "FALSE" and temp_time_same_mc > (12 * 60):
+                if fx_error == "FALSE" and temp_time_same_mc > (12 * 60):
                     temp_time_same_mc = (12 * 60)
                     err = True
                 temp_time += temp_time_same_mc
                 temp_mc_no = t.mc.no
                 temp_time_same_mc = float(t.operate_time)
-        if data_error == "FALSE" and temp_time_same_mc > (12 * 60):
+        if fx_error == "FALSE" and temp_time_same_mc > (12 * 60):
             temp_time_same_mc = (12 * 60)
             err = True
         temp_time += temp_time_same_mc
@@ -199,11 +199,36 @@ def get_machine_list(request):
 
 def get_exp_hrs(request):
     #-- REQUEST DATA FORM FRONT
+    wcg_id = request.GET.get('wcg_id')
     mc_no = request.GET.get('mc_no')
     #-- FETCH DATA FROM DATABASE
-    machine = Machine.objects.get(no=mc_no)
+    exp_hrs = "-1"
+    if mc_no != "-1":
+        mc = Machine.objects.get(no=mc_no)
+        exp_hrs = mc.exp_hrs
+    else:
+        wcg = WorkCenterGroup.objects.get(id=wcg_id)
+        exp_hrs = wcg.exp_hrs
     data = {
-        'exp_hrs' : machine.exp_hrs,
+        'exp_hrs' : exp_hrs,
+    }
+    return JsonResponse(data)
+
+def edit_exp_hrs(request):
+    #-- REQUEST DATA FORM FRONT
+    wcg_id = request.GET.get('wcg_id')
+    mc_no = request.GET.get('mc_no')
+    new_exp_hrs = request.GET.get('new_exp_hrs')
+    #-- FETCH DATA FROM DATABASE
+    if mc_no != "-1":
+        mc = Machine.objects.get(no=mc_no)
+        mc.exp_hrs = new_exp_hrs
+        mc.save()
+    else:
+        wcg = WorkCenterGroup.objects.get(id=wcg_id)
+        wcg.exp_hrs = new_exp_hrs
+        wcg.save()
+    data = {
     }
     return JsonResponse(data)
 
