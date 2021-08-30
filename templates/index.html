@@ -16,7 +16,7 @@
     <meta name="description" content="CoreUI - Open Source Bootstrap Admin Template">
     <meta name="author" content="Łukasz Holeczek">
     <meta name="keyword" content="Bootstrap,Admin,Template,Open,Source,jQuery,CSS,HTML,RWD,Dashboard">
-    <title>AB Graph Applcation</title>
+    <title>AB Graph Application</title>
     <!-- Main styles for this application-->
     <link href="{% static "css/style.css" %}" rel="stylesheet">
     <link href="{% static "vendors/@coreui/chartjs/css/coreui-chartjs.css" %}" rel="stylesheet">
@@ -108,7 +108,7 @@
                               </div>
                             </div>
                             <div class="form-group row">
-                              <label class="col-md-9">
+                              <label class="col-md-6">
                                 <div class="form-check checkbox">
                                   <input class="form-check-input" type="checkbox" id="fx_error" name="fx_error" checked>
                                   <label class="form-check-label" for="fx_error"><small>Fix Error Data</small></label>
@@ -122,8 +122,9 @@
                                   <label class="form-check-label" for="show_line"><small>Show Line</small></label>
                                 </div>
                               </label>
-                              <label class="col-md-3 text-right">
+                              <label class="col-md-6 text-right">
                                 <button type="button" class="btn btn-sm btn-primary" id="execute" name="execute" onclick="set_graph()" disabled>Execute</button>
+                                <button type="button" class="btn btn-sm btn-success" id="print" name="print" onclick="print_graph()">Print</button>
                               </label>
                             </div>
                           </div>
@@ -211,14 +212,12 @@
     <script src="{% static "vendors/@coreui/icons/js/svgxuse.min.js" %}"></script>
     <!--<![endif]-->
     <script src="{% static "vendors/jquery/js/jquery.min.js" %}"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.0/chart.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.0.2/chartjs-plugin-annotation.min.js"></script>
-    <!-- <script src="static/vendors/@coreui/chartjs/js/coreui-chartjs.bundle.js"></script> -->
     <script src="{% static "js/charts.js" %}"></script>
     <script src="{% static "js/loading-buttons.js" %}"></script>
-    <!-- <script src="index.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@1.5.3/dist/jspdf.min.js"></script>
     <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function(event) {
         setTimeout(function() {
@@ -379,9 +378,9 @@
         x_count = get_date_count();
         labels = get_date_labels();
         x_title = 'Date';
-        if(wcg_id == "-1") title = "Machine : All Machine From All Work Center Group";
-        else if(mc_no == "-1") title = "Machine : All Machine From " + get_wcg_name(wcg_id);
-        else title = "Machine : " + mc_no;
+        if(wcg_id == "-1") title = "All Machine From All Work Center Group";
+        else if(mc_no == "-1") title = "All Machine From " + get_wcg_name(wcg_id);
+        else title = mc_no;
         set_data();
       }
 
@@ -559,6 +558,16 @@
             set_graph();
           }
         });
+      }
+
+      function print_graph(){
+        var canvas = document.querySelector("#canvas_1");
+        var canvas_img = canvas.toDataURL("image/png",1.0); //JPEG will not match background color
+        var pdf = new jsPDF('landscape','in', 'letter'); //orientation, units, page size
+        pdf.addImage(canvas_img, 'png', .5, 1.75, 10, 5); //image, type, padding left, padding top, width, height
+        pdf.autoPrint(); //print window automatically opened with pdf
+        var blob = pdf.output("bloburl");
+        window.open(blob);
       }
 
       function hide_filter(){
