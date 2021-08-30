@@ -38,7 +38,7 @@
                       <div class="card" id="card_filter">
                         <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions">
-                            <a class="c-subheader-nav-link" href="#" onclick="update_data()" id="update_data_btn">
+                            <a class="c-subheader-nav-link" href="#" onclick="update_data()" id="update_data_btn" hidden>
                               <svg class="c-icon">
                               <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-sync"></use>
                             </svg>
@@ -165,6 +165,7 @@
 
       //-- INITIALIZE
       $( document ).ready(function() {
+          if(window.location.origin == "http://localhost:8000") $('#update_data_btn').prop("hidden", false);
           var currentdate = new Date();
           $("#year").val(currentdate.getFullYear());
           $("#month").val(month_set[currentdate.getMonth()]);
