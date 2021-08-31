@@ -39,6 +39,12 @@
                                 <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-sync"></use>
                               </svg>
                             </a>
+                            &nbsp;
+                            <a class="c-subheader-nav-link" href="/index0/">
+                              <svg class="c-icon">
+                                <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-chart-line"></use>
+                              </svg>
+                            </a>
                           </div>
                         </div>
                         <div class="card-body">
@@ -379,9 +385,8 @@
         x_count = get_date_count();
         labels = get_date_labels();
         x_title = 'Date';
-        if(wcg_id == "-1") title = "All Machine From All Work Center Group";
-        else if(mc_no == "-1") title = "All Machine From " + get_wcg_name(wcg_id);
-        else title = mc_no;
+        if(mc_no == "-1") title = "All Machine From " + get_wcg_name(wcg_id);
+        else title = get_mc_name(mc_no);
         set_data();
       }
 
@@ -707,6 +712,12 @@
        function get_wcg_name(id){
          var result = "None";
          result = $("#wcg_id option[value='" + id + "']").text();
+         return result;
+       }
+
+       function get_mc_name(no){
+         var result = "None";
+         result = $("#mc_no option[value='" + no + "']").text();
          return result;
        }
 

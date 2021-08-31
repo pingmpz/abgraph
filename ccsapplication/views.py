@@ -55,7 +55,7 @@ def get_data(request):
     error_result = []
     t0 = time.time()
     for i in range(x_count):
-        trans = Transaction.objects.filter(start_datetime__year=year).order_by('mc') #CHECK YEAR
+        trans = Transaction.objects.filter(start_datetime__year=year,).order_by('mc') #CHECK YEAR
         trans = trans.filter(start_datetime__month=get_month_no(month)) #CHECK MONTH
         trans = trans.filter(start_datetime__day=(i+1)) #CHECK DATE
         if shift == 'DAY':
@@ -146,18 +146,20 @@ def get_data0(request):
             day = str(tran.start_datetime.day)
             temp_time = ((24 - tran.start_datetime.hour) * 60) - tran.start_datetime.minute
             print(temp_time)
-            name = str(round((float(temp_time)*100/1440),2)) + "%"
+            # name = str(round((float(temp_time)*100/1440),2)) + "% ►"
+            name = "►"
             color = get_color(color)
-            tooltip = name + "‏‏‎ ‎"
+            tooltip = str(round((float(temp_time)*100/1440),2)) + "%"
             start_hrs = tran.start_datetime.hour
             start_min = tran.start_datetime.minute
             end_hrs = 24
             end_min = 0
             result.append([day,name,color,tooltip,start_hrs,start_min,end_hrs,end_min])
             day = str(tran.stop_datetime.day)
-            name = str(round(((float(tran.operate_time) - temp_time)*100/1440),2)) + "%"
+            # name = str(round(((float(tran.operate_time) - temp_time)*100/1440),2)) + "% ◄"
+            name = "◄"
             color = get_color(color)
-            tooltip = name + "‏‏‎ ‎"
+            tooltip = str(round(((float(tran.operate_time) - temp_time)*100/1440),2)) + "%"
             start_hrs = 0
             start_min = 0
             end_hrs = tran.stop_datetime.hour
@@ -166,9 +168,10 @@ def get_data0(request):
         #-- NORMAL DATA
         else:
             day = str(tran.start_datetime.day)
-            name = str(round((float(tran.operate_time)*100/1440),2)) + "%"
+            # name = str(round((float(tran.operate_time)*100/1440),2)) + "%"
+            name = ""
             color = get_color(color)
-            tooltip = name + "‏‏‎ ‎"
+            tooltip = str(round((float(tran.operate_time)*100/1440),2)) + "%"
             start_hrs = tran.start_datetime.hour
             start_min = tran.start_datetime.minute
             end_hrs = tran.stop_datetime.hour

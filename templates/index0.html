@@ -32,16 +32,22 @@
             <div class="fade-in">
               <div class="row">
                 <!-- Filter -->
-                <div class="col-3">
+                <div class="col-3" id="filter">
                   <div class="row">
                     <div class="col-12">
-                      <div class="card" id="card_filter">
+                      <div class="card">
                         <div class="card-header"><strong>Filter</strong>
                           <div class="card-header-actions">
                             <a class="c-subheader-nav-link" href="#" onclick="update_data()" id="update_data_btn" hidden>
                               <svg class="c-icon">
                               <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-sync"></use>
                             </svg>
+                            </a>
+                            &nbsp;
+                            <a class="c-subheader-nav-link" href="/index/">
+                              <svg class="c-icon">
+                                <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-bar-chart"></use>
+                              </svg>
                             </a>
                           </div>
                         </div>
@@ -115,9 +121,20 @@
                   </div>
                 </div>
                 <!-- Machine Running Time -->
-                <div class="col-9">
+                <div class="col-9" id="graph">
                   <div class="card">
-                    <div class="card-header"><strong>Machine Running Time</strong>
+                    <div class="card-header">
+                      <a class="c-subheader-nav-link" href="#" onclick="hide_filter()" id="hide_filter_btn">
+                        <svg class="c-icon">
+                        <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-caret-left"></use>
+                      </svg>
+                      </a>
+                      <a class="c-subheader-nav-link" href="#" onclick="show_filter()" id="show_filter_btn" hidden>
+                        <svg class="c-icon">
+                        <use xlink:href="{% static "vendors/@coreui/icons/svg/free.svg" %}#cil-caret-right"></use>
+                        </svg>
+                      </a>
+                      <strong>Machine Running Time</strong>
                       <div class="card-header-actions"><small id="fetch_time">FETCH DATA AT ― NONE</small></div>
                     </div>
                     <div class="card-body">
@@ -175,6 +192,7 @@
       //-- DATA
       const month_set = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
       const full_month_set = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      var graph_coef = 0.7;
       //-- MAIN GRAPH
       function set_graph(){
         preload();
@@ -205,7 +223,7 @@
               dataTable.addRows([[ day, name, color, tooltip, new Date(0,0,0,start_hrs,start_min,0),  new Date(0,0,0,end_hrs,end_min,0) ]]);
             }
             var options = {
-                width: $(window).width() * 0.7,
+                width: $(window).width() * graph_coef,
                 height: $(window).height(),
                 timeline: { rowLabelStyle: { fontSize: 12 }, barLabelStyle: { fontSize: 8 } },
             };
@@ -314,6 +332,24 @@
              callback(data.machine_list);
            }
          });
+       }
+
+       function hide_filter(){
+         $('#filter').prop("hidden", true);
+         $('#hide_filter_btn').prop("hidden", true);
+         $('#show_filter_btn').prop("hidden", false);
+         $('#graph').removeClass("col-9").addClass("col-12");
+         graph_coef = 0.95;
+         set_graph();
+       }
+
+       function show_filter(){
+         $('#filter').prop("hidden", false);
+         $('#hide_filter_btn').prop("hidden", false);
+         $('#show_filter_btn').prop("hidden", true);
+         $('#graph').removeClass("col-12").addClass("col-9");
+         graph_coef = 0.7;
+         set_graph();
        }
 
        $('#mc_no').change(function() {
